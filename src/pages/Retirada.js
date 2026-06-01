@@ -31,13 +31,18 @@ export default function Retirada() {
         criado_em: new Date().toISOString(),
       }
 
-      // Salva no Supabase
+      const novosCreditos = atleta.creditos - 1
+
+      // Salva retirada e atualiza créditos no Supabase em paralelo
       try {
-        await supabase.from('retiradas').insert([retirada])
+        await Promise.all([
+          supabase.from('retiradas').insert([retirada]),
+          supabase.from('atletas').update({ creditos: novosCreditos }).eq('email', atleta.email)
+        ])
       } catch (_) {}
 
-      // Debita crédito
-      atualizarCreditos(atleta.creditos - 1)
+      // Atualiza local
+      atualizarCreditos(novosCreditos)
 
       navigate('/confirmacao', { state: { totem, suprimento: selecionado, retirada } })
     } finally {

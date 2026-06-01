@@ -21,10 +21,29 @@ export default function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Verifica se há atleta salvo no localStorage (simula sessão)
-    const saved = localStorage.getItem('runergy_atleta')
-    if (saved) setAtleta(JSON.parse(saved))
-    setLoading(false)
+    const sincronizar = async () => {
+      const saved = localStorage.getItem('runergy_atleta')
+      if (saved) {
+        const atletaLocal = JSON.parse(saved)
+        setAtleta(atletaLocal)
+        // Sincroniza créditos do Supabase em background
+        try {
+          const { createClient } = await import('@supabase/supabase-js')
+          const sb = createClient(
+            process.env.REACT_APP_SUPABASE_URL || 'https://wbodoooanxopwkvdfepq.supabase.co',
+            process.env.REACT_APP_SUPABASE_ANON_KEY || ''
+          )
+          const { data } = await sb.from('atletas').select('creditos').eq('email', atletaLocal.email).single()
+          if (data && data.creditos !== atletaLocal.creditos) {
+            const atualizado = { ...atletaLocal, creditos: data.creditos }
+            setAtleta(atualizado)
+            localStorage.setItem('runergy_atleta', JSON.stringify(atualizado))
+          }
+        } catch (_) {}
+      }
+      setLoading(false)
+    }
+    sincronizar()
   }, [])
 
   const login = (dados) => {
