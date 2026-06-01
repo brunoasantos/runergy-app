@@ -108,6 +108,14 @@ export default function Cadastro() {
         <p style={{ textAlign: 'center', marginTop: 12, fontSize: 12, color: '#9C9A93' }}>
           Sem cartão de crédito. Cancele quando quiser.
         </p>
+        <div style={{ marginTop: 20, textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: '#9C9A93' }}>
+            Já tem conta?{' '}
+            <button onClick={() => navigate('/login')} style={{ background: 'none', border: 'none', color: '#D85A30', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>
+              Entrar
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   )

@@ -11,6 +11,7 @@ import Retirada     from './pages/Retirada'
 import Confirmacao  from './pages/Confirmacao'
 import Historico    from './pages/Historico'
 import Perfil       from './pages/Perfil'
+import Login        from './pages/Login'
 
 export const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/"            element={<Splash />} />
           <Route path="/onboarding"  element={<Onboarding />} />
           <Route path="/cadastro"    element={<Cadastro />} />
+          <Route path="/login"       element={<Login />} />
           <Route path="/home"        element={atleta ? <Home />       : <Navigate to="/" />} />
           <Route path="/scanner"     element={atleta ? <Scanner />    : <Navigate to="/" />} />
           <Route path="/retirada"    element={atleta ? <Retirada />   : <Navigate to="/" />} />

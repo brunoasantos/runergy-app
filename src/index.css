@@ -79,6 +79,14 @@ body {
     z-index: 100;
     flex-shrink: 0;
   }
+
+  /* No desktop o nav fica dentro da moldura */
+  .bottom-nav {
+    position: sticky !important;
+    bottom: 0 !important;
+    max-width: 390px !important;
+    margin-top: auto !important;
+  }
 }
 
 /* ── Tipografia ────────────────────────────────────────── */
