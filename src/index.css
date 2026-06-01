@@ -27,31 +27,58 @@ body {
   padding: 24px 0;
 }
 
-/* ── Moldura do celular ────────────────────────────────── */
-#root {
-  width: 390px;
-  min-height: 844px;
-  background: var(--white);
-  border-radius: 44px;
-  box-shadow: 0 0 0 10px #1a1a18, 0 32px 80px rgba(0,0,0,0.35);
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  flex-direction: column;
+/* ── Celular real: sem moldura, full screen ────────────── */
+@media (max-width: 480px) {
+  body {
+    background: var(--white);
+    padding: 0;
+    align-items: stretch;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #root::before {
+    display: none;
+  }
 }
 
-/* Notch simulado */
-#root::before {
-  content: '';
-  display: block;
-  width: 120px;
-  height: 30px;
-  background: #1a1a18;
-  border-radius: 0 0 20px 20px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 100;
-  flex-shrink: 0;
+/* ── Desktop: moldura de celular ───────────────────────── */
+@media (min-width: 481px) {
+  #root {
+    width: 390px;
+    min-height: 844px;
+    background: var(--white);
+    border-radius: 44px;
+    box-shadow: 0 0 0 10px #1a1a18, 0 32px 80px rgba(0,0,0,0.35);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Notch simulado */
+  #root::before {
+    content: '';
+    display: block;
+    width: 120px;
+    height: 30px;
+    background: #1a1a18;
+    border-radius: 0 0 20px 20px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 100;
+    flex-shrink: 0;
+  }
 }
 
 /* ── Tipografia ────────────────────────────────────────── */
@@ -108,14 +135,24 @@ label { font-size: 13px; font-weight: 500; color: var(--gray-text); margin-botto
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  width: 390px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
   background: rgba(255,255,255,0.95);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--gray-border);
   display: flex;
   justify-content: space-around;
-  padding: 10px 0 24px;
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
   z-index: 50;
+}
+@media (max-width: 480px) {
+  .bottom-nav {
+    max-width: 100%;
+  }
 }
 .nav-item {
   display: flex;
