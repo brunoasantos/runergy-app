@@ -15,7 +15,12 @@ export default function Perfil() {
   const navigate = useNavigate()
   const plano = PLANOS[atleta.plano] || PLANOS.corredor
   const inicial = atleta.nome.charAt(0).toUpperCase()
-  const pct = Math.round((atleta.creditos / plano.creditos) * 100)
+
+  // Usa o máximo entre créditos atuais e o limite do plano
+  // para não quebrar a barra quando créditos > limite do plano
+  const creditosAtual = atleta.creditos || 0
+  const creditosMax   = Math.max(plano.creditos, creditosAtual)
+  const pct           = Math.min(100, Math.round((creditosAtual / creditosMax) * 100))
 
   const handleLogout = () => {
     logout()
@@ -50,12 +55,17 @@ export default function Perfil() {
                 ATIVO
               </span>
             </div>
-            {/* Barra de créditos */}
+
+            {/* Barra de créditos — limitada a 100% */}
             <p style={{ fontSize:12, color:'#6B6A65', marginBottom:8 }}>
-              Créditos: <strong style={{ color:'#1a1a18' }}>{atleta.creditos}</strong> de {plano.creditos} restantes
+              Créditos disponíveis: <strong style={{ color:'#1a1a18' }}>{creditosAtual}</strong>
             </p>
-            <div style={{ background:'rgba(0,0,0,0.08)', borderRadius:999, height:8 }}>
-              <div style={{ background: plano.cor, height:8, borderRadius:999, width:`${pct}%`, transition:'width 0.4s' }}/>
+            <div style={{ background:'rgba(0,0,0,0.08)', borderRadius:999, height:8, overflow:'hidden' }}>
+              <div style={{
+                background: plano.cor, height:8, borderRadius:999,
+                width:`${pct}%`, transition:'width 0.4s',
+                maxWidth:'100%'
+              }}/>
             </div>
           </div>
 
@@ -85,12 +95,10 @@ export default function Perfil() {
             </button>
           ))}
 
-          {/* Versão */}
           <p style={{ textAlign:'center', fontSize:11, color:'#C0BEB8', marginTop:20, marginBottom:16 }}>
             Runergy v0.1.0 · Protótipo MVP
           </p>
 
-          {/* Logout */}
           <button onClick={handleLogout} style={{
             width:'100%', padding:'14px', borderRadius:14,
             border:'1.5px solid #FECACA', background:'#FEF2F2',
