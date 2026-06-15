@@ -17,7 +17,7 @@ export const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
 export default function App() {
-  const [atleta, setAtleta] = useState(null)   // { id, nome, email, plano, creditos }
+  const [atleta, setAtleta] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -26,18 +26,25 @@ export default function App() {
       if (saved) {
         const atletaLocal = JSON.parse(saved)
         setAtleta(atletaLocal)
-        // Sincroniza créditos do Supabase em background
+        // Sincroniza créditos E plano do Supabase em background
         try {
           const { createClient } = await import('@supabase/supabase-js')
           const sb = createClient(
             process.env.REACT_APP_SUPABASE_URL || 'https://wbodoooanxopwkvdfepq.supabase.co',
             process.env.REACT_APP_SUPABASE_ANON_KEY || ''
           )
-          const { data } = await sb.from('atletas').select('creditos').eq('email', atletaLocal.email).single()
-          if (data && data.creditos !== atletaLocal.creditos) {
-            const atualizado = { ...atletaLocal, creditos: data.creditos }
-            setAtleta(atualizado)
-            localStorage.setItem('runergy_atleta', JSON.stringify(atualizado))
+          const { data } = await sb
+            .from('atletas')
+            .select('creditos, plano')
+            .eq('email', atletaLocal.email)
+            .single()
+          if (data) {
+            const mudou = data.creditos !== atletaLocal.creditos || data.plano !== atletaLocal.plano
+            if (mudou) {
+              const atualizado = { ...atletaLocal, creditos: data.creditos, plano: data.plano }
+              setAtleta(atualizado)
+              localStorage.setItem('runergy_atleta', JSON.stringify(atualizado))
+            }
           }
         } catch (_) {}
       }
