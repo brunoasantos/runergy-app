@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { brl, mensagemErro } from '../lib/format'
@@ -21,6 +21,8 @@ export default function Planos() {
   const [f, setF] = useState({ telefone: '', cep: '', cidade: '', estado: '', endereco: '', numero: '', complemento: '' })
   const [carregado, setCarregado] = useState(false)
   const [buscando, setBuscando] = useState(false)
+  const [avisoCep, setAvisoCep] = useState('')
+  const numRef = useRef(null)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }))
@@ -34,14 +36,26 @@ export default function Planos() {
       })
   }, [])
 
-  async function cep(v) {
-    const m = mascaraCep(v); set('cep', m)
-    if (m.replace(/\D/g, '').length !== 8) return
-    setBuscando(true)
+  // CEP completo → preenche cidade, UF e endereço (rua - bairro) e leva o cursor para o número
+  async function completarPeloCep(m, sobrescrever = true) {
+    setBuscando(true); setAvisoCep('')
     const r = await buscarCep(m)
     setBuscando(false)
-    if (r) setF((x) => ({ ...x, cep: m, cidade: r.cidade || x.cidade, estado: r.estado || x.estado, endereco: r.endereco || x.endereco }))
+    if (!r) { setAvisoCep('Não encontramos esse CEP. Confira os números ou preencha o endereço.'); return }
+    setF((x) => ({ ...x, cidade: r.cidade || x.cidade, estado: r.estado || x.estado,
+      endereco: r.endereco && (sobrescrever || !x.endereco) ? r.endereco : x.endereco }))
+    if (!r.temRua) setAvisoCep('Esse CEP é da cidade toda: digite a rua e o bairro.')
+    else setTimeout(() => numRef.current?.focus(), 50)
   }
+  function cep(v) {
+    const m = mascaraCep(v); set('cep', m)
+    if (m.replace(/\D/g, '').length === 8) completarPeloCep(m)
+  }
+  // Cadastro antigo com CEP mas sem endereço: completa sozinho ao abrir
+  useEffect(() => {
+    if (carregado && f.cep.replace(/\D/g, '').length === 8 && (!f.endereco || !f.cidade)) completarPeloCep(f.cep, false)
+    // só ao terminar de carregar o cadastro
+  }, [carregado]) // eslint-disable-line
 
   const completo = f.telefone.replace(/\D/g, '').length >= 10 && f.cep.replace(/\D/g, '').length === 8 && f.cidade.trim() && f.estado && f.endereco.trim() && f.numero.trim()
 
@@ -99,13 +113,14 @@ export default function Planos() {
                 <option value="">UF</option>{UFS.map((u) => <option key={u} value={u}>{u}</option>)}
               </select></div>
           </div>
+          {avisoCep && <span className="small" style={{ color: 'var(--accent-text)', marginTop: -4 }}>{avisoCep}</span>}
           <div className="field"><label htmlFor="pl-cid">Cidade</label>
             <input id="pl-cid" className="input" autoComplete="address-level2" value={f.cidade} onChange={(e) => set('cidade', e.target.value)} /></div>
           <div className="field"><label htmlFor="pl-end">Endereço</label>
             <input id="pl-end" className="input" autoComplete="address-line1" placeholder="Rua, avenida…" value={f.endereco} onChange={(e) => set('endereco', e.target.value)} /></div>
           <div className="form-duas">
             <div className="field"><label htmlFor="pl-num">Número</label>
-              <input id="pl-num" className="input" inputMode="numeric" value={f.numero} onChange={(e) => set('numero', e.target.value)} /></div>
+              <input id="pl-num" ref={numRef} className="input" inputMode="numeric" value={f.numero} onChange={(e) => set('numero', e.target.value)} /></div>
             <div className="field"><label htmlFor="pl-comp">Complemento</label>
               <input id="pl-comp" className="input" autoComplete="address-line2" placeholder="Apto, bloco…" value={f.complemento} onChange={(e) => set('complemento', e.target.value)} /></div>
           </div>

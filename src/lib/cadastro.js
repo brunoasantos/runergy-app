@@ -14,7 +14,9 @@ export async function buscarCep(cep) {
   try {
     const r = await fetch(`https://viacep.com.br/ws/${d}/json/`)
     const j = await r.json()
-    return j.erro ? null : { cidade: j.localidade || '', estado: j.uf || '', endereco: j.logradouro || '' }
+    // Endereço = rua + bairro (o número fica no campo próprio). CEP geral de cidade pequena vem sem rua.
+    const endereco = [j.logradouro, j.bairro].filter(Boolean).join(' - ')
+    return j.erro ? null : { cidade: j.localidade || '', estado: j.uf || '', endereco, temRua: !!j.logradouro }
   } catch (e) { return null }
 }
 // Quem confirmou o código de "Esqueci minha senha" precisa definir a nova senha antes de seguir
