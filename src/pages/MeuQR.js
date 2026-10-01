@@ -11,7 +11,7 @@ import Icon from '../components/Icon'
 const VALIDADE = 90 // segundos (definido no banco)
 
 export default function MeuQR() {
-  const { perfil, recarregarPerfil } = useAuth()
+  const { perfil, conta, recarregarPerfil } = useAuth()
   const nav = useNavigate()
   const [codigo, setCodigo] = useState(null)
   const [expiraEm, setExpiraEm] = useState(null)
@@ -21,7 +21,7 @@ export default function MeuQR() {
   const gerando = useRef(false)
 
   const plano = perfil.planos || {}
-  const acesso = !!plano.acesso_totem
+  const acesso = conta.acessoQR
 
   const gerar = useCallback(async () => {
     if (gerando.current) return
@@ -124,8 +124,8 @@ export default function MeuQR() {
               <div className="stack" style={{ alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: 20, fontWeight: 800, textAlign: 'center' }}>{perfil.nome}</span>
                 <div className="row" style={{ gap: 8, justifyContent: 'center' }}>
-                  <span className="pill-dark">{(plano.nome || '').toUpperCase()}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#3D3D3D' }}>{perfil.creditos} créditos</span>
+                  <span className="pill-dark">{conta.rotulo.toUpperCase()}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#3D3D3D' }}>{conta.ilimitado ? 'ilimitado' : `${perfil.creditos} créditos`}</span>
                 </div>
               </div>
             </section>
@@ -138,8 +138,8 @@ export default function MeuQR() {
               <div className="bar"><span style={{ width: `${pct}%`, transition: 'width 1s linear' }} /></div>
             </div>
 
-            {perfil.creditos <= 0 && (
-              <div className="alert warn">Você está sem créditos neste mês. Eles renovam na próxima cobrança do plano.</div>
+            {!conta.ilimitado && perfil.creditos <= 0 && (
+              <div className="alert warn">Você está sem créditos neste mês. Eles renovam no dia 1º do próximo mês.</div>
             )}
 
             <div className="card tight row">

@@ -7,7 +7,7 @@ import Icon from '../components/Icon'
 
 export default function Confirmado() {
   const { id } = useParams()
-  const { perfil } = useAuth()
+  const { perfil, conta } = useAuth()
   const [r, setR] = useState(null)
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function Confirmado() {
         <div style={{ height: 1, background: 'rgba(255,255,255,0.1)' }} />
         <div className="row between" style={{ alignItems: 'baseline' }}>
           <span className="small" style={{ color: '#B5B5B5' }}>Créditos restantes</span>
-          <span className="num" style={{ fontSize: 30, color: '#FF7A33' }}>{perfil.creditos}</span>
+          <span className="num" style={{ fontSize: 30, color: '#FF7A33' }}>{conta.ilimitado ? '∞' : perfil.creditos}</span>
         </div>
       </section>
 

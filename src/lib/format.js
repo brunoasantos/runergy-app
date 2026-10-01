@@ -44,8 +44,8 @@ const ERROS = {
   TOTEM_INVALIDO: 'Ponto não encontrado ou desativado.',
   QUANTIDADE_INVALIDA: 'Quantidade inválida.',
   SUPRIMENTO_INDISPONIVEL: 'Esse item não está disponível neste ponto.',
-  PLANO_SEM_ACESSO: 'O plano desse atleta não dá acesso aos pontos. Só o Hero retira.',
-  SEM_CREDITOS: 'O atleta está sem créditos neste mês.',
+  PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: só o plano Hero).',
+  SEM_CREDITOS: 'Sem créditos neste mês. Eles renovam no dia 1º.',
   SEM_ESTOQUE: 'Acabou esse item no ponto. Reponha o estoque no painel.',
 }
 

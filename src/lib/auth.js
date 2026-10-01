@@ -4,7 +4,32 @@ import { supabase } from './supabase'
 const AuthCtx = createContext(null)
 export const useAuth = () => useContext(AuthCtx)
 
-const PERFIL_COLS = 'id, email, nome, papel, plano, creditos, planos ( id, nome, preco, creditos_mes, acesso_totem )'
+const PERFIL_COLS = 'id, email, nome, tipo, papel, plano, creditos, planos ( id, nome, preco, creditos_mes, acesso_totem )'
+
+const NOME_PAPEL = { operador: 'Operador', supervisor: 'Supervisor', admin: 'Admin' }
+
+/**
+ * Resumo do que a pessoa tem (regras em DOC_TECNICA §2):
+ *  cliente → plano Grátis/Starter/Runner/Hero (só Hero tem QR)
+ *  atleta  → QR + 20 créditos/mês
+ *  equipe  → QR + 10 créditos/mês; admin ilimitado
+ */
+export function resumoConta(perfil) {
+  if (!perfil) return null
+  const tipo = perfil.tipo || 'cliente'
+  const plano = perfil.planos || {}
+  const ilimitado = tipo === 'equipe' && perfil.papel === 'admin'
+  const creditosMes = ilimitado ? null : tipo === 'equipe' ? 10 : tipo === 'atleta' ? 20 : (plano.creditos_mes || 0)
+  return {
+    tipo,
+    ilimitado,
+    creditosMes,
+    acessoQR: tipo !== 'cliente' || !!plano.acesso_totem,
+    rotulo: tipo === 'atleta' ? 'Atleta Runergy' : tipo === 'equipe' ? `Equipe · ${NOME_PAPEL[perfil.papel] || ''}` : (plano.nome || 'Grátis'),
+    planoCliente: plano.nome || 'Grátis',
+    precoCliente: tipo === 'cliente' ? (plano.preco || 0) : 0,
+  }
+}
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
@@ -54,6 +79,7 @@ export function AuthProvider({ children }) {
     session,
     user: session?.user || null,
     perfil,
+    conta: resumoConta(perfil),
     carregando,
     ehEquipe: !!perfil && ['equipe', 'operador', 'supervisor', 'admin'].includes(perfil.papel),
     recarregarPerfil: () => carregarPerfil(session?.user?.id),

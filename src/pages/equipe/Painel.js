@@ -9,7 +9,8 @@ import Icon from '../../components/Icon'
 import { useToast } from '../../components/Toast'
 
 export default function Painel() {
-  const { user, perfil } = useAuth()
+  const { user, perfil, conta, recarregarPerfil } = useAuth()
+  const [consumindo, setConsumindo] = useState(null)
   const ehAdmin = perfil?.papel === 'admin'
   const ponto = usePonto()
   const [toastEl, toast] = useToast()
@@ -56,6 +57,16 @@ export default function Painel() {
     setDados((d) => d && { ...d, abordagens: Math.max(0, d.abordagens + delta) })
   }
 
+  async function consumir(s) {
+    setConsumindo(s)
+    const { data, error } = await supabase.rpc('registrar_consumo_equipe', { p_totem_code: ponto.codigo, p_suprimento: s })
+    setConsumindo(null)
+    if (error) return toast(mensagemErro(error), 'err')
+    const r = Array.isArray(data) ? data[0] : data
+    toast(`${suprimento(s).label} registrado no seu consumo${r?.creditos_restantes >= 9999 ? '' : ` · restam ${r?.creditos_restantes} créditos`}`, 'ok')
+    recarregarPerfil(); carregar()
+  }
+
   function abrirEdicao() {
     const r = {}
     for (const s of ponto.ponto?.suprimentos || []) r[s] = { quantidade: estoque[s]?.quantidade ?? 0, capacidade: estoque[s]?.capacidade ?? 0 }
@@ -99,6 +110,22 @@ export default function Painel() {
               : <div className="kpi"><span className="num">{Object.values(estoque).reduce((a, e) => a + (e?.quantidade || 0), 0)}</span><span className="tiny muted">itens no estoque</span></div>}
           </div>
         )}
+
+        <section className="card tight stack" style={{ gap: 12 }} aria-label="Meu consumo">
+          <div className="row between" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontWeight: 700 }}>Meu consumo</div>
+              <div className="small muted">Pegou algo do ponto para você? Registre aqui. Baixa do estoque e {conta.ilimitado ? 'não gasta crédito (admin)' : `usa 1 dos seus créditos (${perfil.creditos} restantes)`}.</div>
+            </div>
+          </div>
+          <div className="supply-grid">
+            {(ponto.ponto?.suprimentos || []).map((s) => (
+              <button key={s} type="button" className="supply" disabled={!!consumindo || (!conta.ilimitado && perfil.creditos <= 0)} onClick={() => consumir(s)}>
+                <Icon name={suprimento(s).icon} size={22} /><span>{consumindo === s ? 'Registrando…' : suprimento(s).label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
 
         <section className="card tight row" aria-label="Contar abordagem">
           <div className="grow">

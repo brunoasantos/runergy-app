@@ -10,7 +10,7 @@ const MOTIVOS = {
   CODIGO_INVALIDO: 'QR não reconhecido.',
   CODIGO_EXPIRADO: 'Esse QR expirou. Peça para o atleta atualizar a tela.',
   CODIGO_JA_USADO: 'Esse QR já foi usado.',
-  PLANO_SEM_ACESSO: 'O plano do atleta não dá acesso aos pontos (só o Hero retira).',
+  PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: só o plano Hero).',
   SEM_CREDITOS: 'O atleta está sem créditos neste mês.',
 }
 
@@ -36,7 +36,7 @@ export default function Validar() {
     if (error) { setErro(mensagemErro(error)); return }
     const r = Array.isArray(data) ? data[0] : data
     try { navigator.vibrate?.([60, 40, 60]) } catch (e) {}
-    nav('/equipe', { replace: true, state: { ok: `${suprimento(item).label} entregue para ${(r?.atleta_nome || info.atleta_nome || 'o atleta').split(' ')[0]} · restam ${r?.creditos_restantes ?? '—'} créditos` } })
+    nav('/equipe', { replace: true, state: { ok: `${suprimento(item).label} entregue para ${(r?.atleta_nome || info.atleta_nome || 'o atleta').split(' ')[0]} · ${r?.creditos_restantes >= 9999 ? 'admin ilimitado' : `restam ${r?.creditos_restantes ?? '—'} créditos`}` } })
   }
 
   return (
@@ -52,7 +52,7 @@ export default function Validar() {
               {info.valido ? 'CÓDIGO VÁLIDO' : 'NÃO LIBERADO'}
             </div>
             <div className="h2 ellipsis">{info.atleta_nome || 'Atleta'}</div>
-            {info.plano_nome && <div className="small muted">{info.plano_nome} · {info.creditos} créditos</div>}
+            {info.plano_nome && <div className="small muted">{info.plano_nome} · {info.creditos >= 9999 ? 'ilimitado' : `${info.creditos} créditos`}</div>}
           </div>
         </section>
 

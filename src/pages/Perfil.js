@@ -9,10 +9,10 @@ import ThemeSwitch from '../components/ThemeSwitch'
 import Icon from '../components/Icon'
 
 export default function Perfil() {
-  const { perfil, ehEquipe, sair, recarregarPerfil } = useAuth()
+  const { perfil, ehEquipe, conta, sair, recarregarPerfil } = useAuth()
   const tema = useTema()
   const plano = perfil.planos || {}
-  const maxCred = Math.max(plano.creditos_mes || 0, perfil.creditos || 0, 1)
+  const maxCred = Math.max(conta.creditosMes || 0, perfil.creditos || 0, 1)
   const [editando, setEditando] = useState(false)
   const [nome, setNome] = useState(perfil.nome || '')
   const [erro, setErro] = useState('')
@@ -41,19 +41,21 @@ export default function Perfil() {
 
         <section className="card accent stack" style={{ gap: 14 }} aria-label="Seu plano">
           <div className="streaks" aria-hidden="true" style={{ right: 0, top: -10, width: 60, height: 140 }}><i style={{ right: 20, width: 12, height: 140, opacity: 0.8 }} /></div>
-          <span className="label-caps">Seu plano</span>
+          <span className="label-caps">{conta.tipo === 'cliente' ? 'Seu plano' : 'Seu acesso'}</span>
           <div className="row" style={{ alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-            <span className="num" style={{ fontSize: 34, textTransform: 'uppercase' }}>{plano.nome || 'Grátis'}</span>
-            {plano.preco > 0 && <span className="small" style={{ color: 'var(--text-2)' }}>{brl(plano.preco)}/mês</span>}
+            <span className="num" style={{ fontSize: 'clamp(26px, 8vw, 34px)', textTransform: 'uppercase' }}>{conta.rotulo}</span>
+            {conta.precoCliente > 0 && <span className="small" style={{ color: 'var(--text-2)' }}>{brl(conta.precoCliente)}/mês</span>}
           </div>
           <div className="stack" style={{ gap: 8 }}>
-            <div className="row between small"><span style={{ color: 'var(--text-2)' }}>Créditos disponíveis</span><strong>{perfil.creditos}{plano.creditos_mes && perfil.creditos <= plano.creditos_mes ? ` de ${plano.creditos_mes}` : ''}</strong></div>
-            <div className="bar"><span style={{ width: `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} /></div>
-            <span className="tiny muted">{plano.acesso_totem ? 'Acesso a todos os pontos Runergy.' : 'Sem acesso aos pontos — disponível no plano Hero.'}</span>
+            <div className="row between small"><span style={{ color: 'var(--text-2)' }}>Créditos disponíveis</span><strong>{conta.ilimitado ? 'Ilimitado' : `${perfil.creditos}${conta.creditosMes && perfil.creditos <= conta.creditosMes ? ` de ${conta.creditosMes}` : ''}`}</strong></div>
+            <div className="bar"><span style={{ width: conta.ilimitado ? '100%' : `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} /></div>
+            <span className="tiny muted">{conta.acessoQR ? `Acesso a todos os pontos Runergy.${conta.creditosMes ? ` Renova para ${conta.creditosMes} no dia 1º de cada mês.` : ''}` : 'Sem acesso aos pontos — disponível no plano Hero.'}</span>
           </div>
-          <a href={LINK_PLANOS} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-block">
-            {plano.acesso_totem ? 'Ver planos' : 'Quero ser Hero'}
-          </a>
+          {conta.tipo === 'cliente' && (
+            <a href={LINK_PLANOS} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-block">
+              {plano.acesso_totem ? 'Ver planos' : 'Quero ser Hero'}
+            </a>
+          )}
         </section>
 
         {ehEquipe && (

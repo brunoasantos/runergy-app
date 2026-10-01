@@ -71,7 +71,7 @@ export default function Entrar() {
         <h1 className="display">Sua mochila<br />invisível.</h1>
         <p className="lead">
           {etapa === 'email'
-            ? 'Entre com seu e-mail. Mandamos um código de 6 dígitos — sem senha para lembrar.'
+            ? 'Entre ou crie sua conta grátis com seu e-mail. Mandamos um código de 6 dígitos — sem senha para lembrar.'
             : <>Mandamos um código para <strong style={{ color: 'var(--text)' }}>{email.trim().toLowerCase()}</strong>. Confira também o spam.</>}
         </p>
       </div>

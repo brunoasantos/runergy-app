@@ -8,14 +8,13 @@ import InstallPrompt from '../components/InstallPrompt'
 import Icon from '../components/Icon'
 
 export default function Inicio() {
-  const { perfil, ehEquipe } = useAuth()
+  const { perfil, ehEquipe, conta } = useAuth()
   const [pontos, setPontos] = useState(null)
   const [ultima, setUltima] = useState(null)
   const [posicao, setPosicao] = useState(null)
 
-  const plano = perfil.planos || {}
-  const acesso = !!plano.acesso_totem
-  const maxCred = Math.max(plano.creditos_mes || 0, perfil.creditos || 0, 1)
+  const acesso = conta.acessoQR
+  const maxCred = Math.max(conta.creditosMes || 0, perfil.creditos || 0, 1)
 
   useEffect(() => {
     supabase.from('totens').select('totem_code, nome, cidade, estado, lat, lng, suprimentos, horario')
@@ -58,15 +57,14 @@ export default function Inicio() {
             <i style={{ right: 50, width: 6, height: 170, opacity: 0.4 }} />
           </div>
           <div className="row" style={{ gap: 8 }}>
-            <span className="pill brand">{(plano.nome || 'Grátis').toUpperCase()}</span>
-            {ehEquipe && <span className="pill neutral">{({ operador: 'OPERADOR', supervisor: 'SUPERVISOR', admin: 'ADMIN' })[perfil.papel] || 'EQUIPE'}</span>}
+            <span className="pill brand">{conta.rotulo.toUpperCase()}</span>
           </div>
           <div className="row" style={{ alignItems: 'baseline', gap: 8, marginTop: 14 }}>
-            <span className="num" style={{ fontSize: 'clamp(52px, 17vw, 68px)' }}>{perfil.creditos}</span>
-            <span className="small" style={{ color: 'var(--text-2)' }}>{!plano.creditos_mes ? 'créditos' : perfil.creditos > plano.creditos_mes ? `créditos · plano com ${plano.creditos_mes}/mês` : `de ${plano.creditos_mes} créditos`}</span>
+            <span className="num" style={{ fontSize: 'clamp(52px, 17vw, 68px)' }}>{conta.ilimitado ? '∞' : perfil.creditos}</span>
+            <span className="small" style={{ color: 'var(--text-2)' }}>{conta.ilimitado ? 'créditos ilimitados' : !conta.creditosMes ? 'créditos' : perfil.creditos > conta.creditosMes ? `créditos · ${conta.creditosMes} por mês` : `de ${conta.creditosMes} créditos no mês`}</span>
           </div>
           <div className="bar" style={{ marginTop: 14, maxWidth: 'calc(100% - 70px)' }}>
-            <span style={{ width: `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} />
+            <span style={{ width: conta.ilimitado ? '100%' : `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} />
           </div>
         </section>
 
