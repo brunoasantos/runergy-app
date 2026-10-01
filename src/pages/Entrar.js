@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase, erroDoLink } from '../lib/supabase'
 import { mensagemErro } from '../lib/format'
 import { RMark, Streaks } from '../components/Brand'
 import Icon from '../components/Icon'
@@ -13,7 +13,7 @@ export default function Entrar() {
   const [etapa, setEtapa] = useState('email') // email | codigo
   const [email, setEmail] = useState('')
   const [codigo, setCodigo] = useState('')
-  const [erro, setErro] = useState('')
+  const [erro, setErro] = useState(erroDoLink ? 'Esse link do e-mail expirou ou já foi usado. Digite seu e-mail abaixo e use o código de 6 dígitos.' : '')
   const [enviando, setEnviando] = useState(false)
   const [restante, setRestante] = useState(0)
   const codigoRef = useRef(null)
@@ -34,7 +34,7 @@ export default function Entrar() {
     setEnviando(true); setErro('')
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: true },
+      options: { shouldCreateUser: true, emailRedirectTo: window.location.origin },
     })
     setEnviando(false)
     if (error) { setErro(mensagemErro(error)); return }
