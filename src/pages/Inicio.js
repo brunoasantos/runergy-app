@@ -59,7 +59,7 @@ export default function Inicio() {
           </div>
           <div className="row" style={{ gap: 8 }}>
             <span className="pill brand">{(plano.nome || 'Grátis').toUpperCase()}</span>
-            {ehEquipe && <span className="pill neutral">EQUIPE</span>}
+            {ehEquipe && <span className="pill neutral">{({ operador: 'OPERADOR', supervisor: 'SUPERVISOR', admin: 'ADMIN' })[perfil.papel] || 'EQUIPE'}</span>}
           </div>
           <div className="row" style={{ alignItems: 'baseline', gap: 8, marginTop: 14 }}>
             <span className="num" style={{ fontSize: 'clamp(52px, 17vw, 68px)' }}>{perfil.creditos}</span>

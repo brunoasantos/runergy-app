@@ -42,6 +42,7 @@ const ERROS = {
   CODIGO_EXPIRADO: 'Esse QR expirou. Peça para o atleta atualizar a tela.',
   CODIGO_JA_USADO: 'Esse QR já foi usado. Peça para o atleta gerar um novo.',
   TOTEM_INVALIDO: 'Ponto não encontrado ou desativado.',
+  QUANTIDADE_INVALIDA: 'Quantidade inválida.',
   SUPRIMENTO_INDISPONIVEL: 'Esse item não está disponível neste ponto.',
   PLANO_SEM_ACESSO: 'O plano desse atleta não dá acesso aos pontos. Só o Hero retira.',
   SEM_CREDITOS: 'O atleta está sem créditos neste mês.',

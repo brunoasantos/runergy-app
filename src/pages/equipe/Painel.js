@@ -62,14 +62,16 @@ export default function Painel() {
   }
 
   async function salvarEstoque() {
-    const linhas = Object.entries(rascunho).map(([s, v]) => ({
-      totem_code: ponto.codigo, suprimento: s,
-      quantidade: Math.max(0, parseInt(v.quantidade, 10) || 0),
-      capacidade: Math.max(0, parseInt(v.capacidade, 10) || 0),
-      atualizado_em: new Date().toISOString(), atualizado_por: user.id,
-    }))
-    const { error } = await supabase.from('estoque_ponto').upsert(linhas, { onConflict: 'totem_code,suprimento' })
-    if (error) return toast(mensagemErro(error), 'err')
+    // Cada item vira uma "contagem" registrada no histórico de estoque (RPC ajustar_estoque)
+    for (const [s, v] of Object.entries(rascunho)) {
+      const quantidade = Math.max(0, parseInt(v.quantidade, 10) || 0)
+      const capacidade = Math.max(0, parseInt(v.capacidade, 10) || 0)
+      const { error } = await supabase.rpc('ajustar_estoque', {
+        p_totem_code: ponto.codigo, p_suprimento: s, p_quantidade: quantidade,
+        p_tipo: 'ajuste', p_capacidade: capacidade, p_obs: 'Contagem pelo app',
+      })
+      if (error) return toast(mensagemErro(error), 'err')
+    }
     toast('Estoque atualizado', 'ok'); setEditEstoque(false); carregar()
   }
 
