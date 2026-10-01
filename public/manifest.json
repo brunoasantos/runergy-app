@@ -1,8 +1,18 @@
 {
   "short_name": "Runergy",
-  "name": "Runergy — A mochila invisível",
-  "start_url": ".",
+  "name": "Runergy — Keep your pace",
+  "description": "Água, carbo gel e eletrólitos na sua rota de corrida.",
+  "lang": "pt-BR",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#1a1a18",
-  "background_color": "#1a1a18"
+  "orientation": "portrait",
+  "theme_color": "#121212",
+  "background_color": "#121212",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
 }
