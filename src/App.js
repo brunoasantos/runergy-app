@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './lib/auth'
 import { useTheme } from './lib/theme'
 import { TemaCtx } from './lib/temaCtx'
+import { deveAbrirNoModoEquipe, salvarModo, marcarSessao } from './lib/modo'
 
 import Entrar from './pages/Entrar'
 import EntrarEquipe from './pages/EntrarEquipe'
@@ -33,6 +34,10 @@ function Protegida({ children, equipe = false }) {
   if (!session) return <Navigate to="/entrar" replace state={{ de: loc.pathname }} />
   if (!perfil.nome && loc.pathname !== '/bem-vindo') return <Navigate to="/bem-vindo" replace />
   if (equipe && !ehEquipe) return <Navigate to="/" replace />
+  if (equipe) salvarModo('equipe')
+  // Ao abrir o app: quem estava no modo equipe (ou operador) volta direto para o Scanner
+  if (!equipe && ehEquipe && loc.pathname === '/' && deveAbrirNoModoEquipe(perfil.papel)) return <Navigate to="/equipe" replace />
+  marcarSessao()
   return children
 }
 

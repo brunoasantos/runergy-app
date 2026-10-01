@@ -384,3 +384,13 @@ a { color: var(--accent-text); }
   .qr-card svg { width: min(60vh, 260px); }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* Faixa do modo equipe: seletor de ponto + botão de tema */
+.band > .row:last-child { min-width: 0; }
+.band > .row:last-child select { max-width: 100%; }
+.band .band-icon {
+  flex-shrink: 0; width: 40px; height: 40px; border-radius: 999px; border: 0;
+  background: rgba(127, 127, 127, 0.18); color: var(--band-text);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+@media (max-width: 360px) { .band { padding-left: 12px; padding-right: 12px; gap: 8px; } .band .band-modo { display: none; } }

@@ -63,7 +63,7 @@ export default function Inicio() {
           </div>
           <div className="row" style={{ alignItems: 'baseline', gap: 8, marginTop: 14 }}>
             <span className="num" style={{ fontSize: 'clamp(52px, 17vw, 68px)' }}>{perfil.creditos}</span>
-            <span className="small" style={{ color: 'var(--text-2)' }}>{plano.creditos_mes ? `de ${plano.creditos_mes} créditos` : 'créditos'}</span>
+            <span className="small" style={{ color: 'var(--text-2)' }}>{!plano.creditos_mes ? 'créditos' : perfil.creditos > plano.creditos_mes ? `créditos · plano com ${plano.creditos_mes}/mês` : `de ${plano.creditos_mes} créditos`}</span>
           </div>
           <div className="bar" style={{ marginTop: 14, maxWidth: 'calc(100% - 70px)' }}>
             <span style={{ width: `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} />

@@ -47,7 +47,7 @@ export default function Perfil() {
             {plano.preco > 0 && <span className="small" style={{ color: 'var(--text-2)' }}>{brl(plano.preco)}/mês</span>}
           </div>
           <div className="stack" style={{ gap: 8 }}>
-            <div className="row between small"><span style={{ color: 'var(--text-2)' }}>Créditos disponíveis</span><strong>{perfil.creditos}{plano.creditos_mes ? ` de ${plano.creditos_mes}` : ''}</strong></div>
+            <div className="row between small"><span style={{ color: 'var(--text-2)' }}>Créditos disponíveis</span><strong>{perfil.creditos}{plano.creditos_mes && perfil.creditos <= plano.creditos_mes ? ` de ${plano.creditos_mes}` : ''}</strong></div>
             <div className="bar"><span style={{ width: `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} /></div>
             <span className="tiny muted">{plano.acesso_totem ? 'Acesso a todos os pontos Runergy.' : 'Sem acesso aos pontos — disponível no plano Hero.'}</span>
           </div>

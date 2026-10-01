@@ -9,7 +9,8 @@ import Icon from '../../components/Icon'
 import { useToast } from '../../components/Toast'
 
 export default function Painel() {
-  const { user } = useAuth()
+  const { user, perfil } = useAuth()
+  const ehAdmin = perfil?.papel === 'admin'
   const ponto = usePonto()
   const [toastEl, toast] = useToast()
   const [dados, setDados] = useState(null)
@@ -93,7 +94,9 @@ export default function Painel() {
             <div className="kpi"><span className="num" style={{ color: 'var(--accent-text)' }}>{dados.retiradas.length}</span><span className="tiny muted">entregas</span></div>
             <div className="kpi"><span className="num">{dados.atletas}</span><span className="tiny muted">atletas diferentes</span></div>
             <div className="kpi"><span className="num">{dados.abordagens}</span><span className="tiny muted">abordagens{conversao != null ? ` · ${conversao}% retiraram` : ''}</span></div>
-            <div className="kpi"><span className="num">{dados.assinaturas}</span><span className="tiny muted">assinaturas no site hoje</span></div>
+            {ehAdmin
+              ? <div className="kpi"><span className="num">{dados.assinaturas}</span><span className="tiny muted">assinaturas no site hoje</span></div>
+              : <div className="kpi"><span className="num">{Object.values(estoque).reduce((a, e) => a + (e?.quantidade || 0), 0)}</span><span className="tiny muted">itens no estoque</span></div>}
           </div>
         )}
 
