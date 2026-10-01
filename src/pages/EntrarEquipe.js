@@ -24,7 +24,7 @@ export default function EntrarEquipe() {
       <div className="stack" style={{ gap: 10, marginTop: 12 }}>
         <span className="pill neutral" style={{ alignSelf: 'flex-start' }}>ACESSO DA EQUIPE</span>
         <h1 className="display" style={{ fontSize: 'clamp(28px, 8.5vw, 36px)' }}>Entre para operar o ponto.</h1>
-        <p className="lead">Use o e-mail e a senha da sua conta de equipe. Atletas entram com o código por e-mail.</p>
+        <p className="lead">Use o e-mail e a senha da sua conta de equipe. Ainda não tem senha? Volte e entre com o código por e-mail: o modo equipe aparece sozinho no Início.</p>
       </div>
       <form className="stack" style={{ gap: 16 }} onSubmit={entrar}>
         <div className="field">
