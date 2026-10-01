@@ -10,7 +10,7 @@ const NOME_PAPEL = { operador: 'Operador', supervisor: 'Supervisor', admin: 'Adm
 
 /**
  * Resumo do que a pessoa tem (regras em DOC_TECNICA §2):
- *  cliente → plano Grátis/Starter/Runner/Hero (só Hero tem QR)
+ *  cliente → plano Grátis/Starter/Runner/Hero (Runner e Hero têm QR; regra em planos.acesso_totem)
  *  atleta  → QR + 20 créditos/mês
  *  equipe  → QR + 10 créditos/mês; admin ilimitado
  */

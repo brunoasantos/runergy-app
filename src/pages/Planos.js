@@ -9,8 +9,8 @@ import PageHeader from '../components/PageHeader'
 // Mesmos planos e benefícios do site (runergy-site/src/lib/planos.js)
 const PLANOS = [
   { id: 'starter', nome: 'Starter', preco: 59.9, resumo: 'Kit em casa todo mês', itens: ['6 sachês de carbo gel', '2 isotônicos', '2 pré-treinos em pó', 'Entrega mensal na sua porta'] },
-  { id: 'runner', nome: 'Runner', preco: 89.9, resumo: 'Kit em casa + itens Runergy', itens: ['Tudo do plano Starter', 'Camiseta, boné e meia Runergy (enviados uma vez, a partir da 2ª mensalidade)', 'Frete grátis'] },
-  { id: 'hero', nome: 'Hero', preco: 129.9, resumo: 'Tudo do Runner + retirada nos pontos', qr: true, itens: ['Tudo do plano Runner', 'QR nos pontos: 30 créditos por mês', 'Óculos Baixa Pace (enviado uma vez, a partir da 2ª mensalidade)', 'Suporte VIP', 'Frete grátis'] },
+  { id: 'runner', nome: 'Runner', preco: 89.9, resumo: 'Kit em casa + 10 créditos nos pontos', qr: true, itens: ['Tudo do plano Starter', 'QR nos pontos: 10 créditos por mês', 'Camiseta, boné e meia Runergy (enviados uma vez, a partir da 2ª mensalidade)', 'Frete grátis'] },
+  { id: 'hero', nome: 'Hero', preco: 129.9, resumo: 'Tudo do Runner com 30 créditos nos pontos', qr: true, itens: ['Tudo do plano Runner', 'QR nos pontos: 30 créditos por mês', 'Óculos Baixa Pace (enviado uma vez, a partir da 2ª mensalidade)', 'Suporte VIP', 'Frete grátis'] },
 ]
 
 /** Assinar pelo app: escolhe o plano, confere o endereço do kit e segue para o pagamento no Mercado Pago. */

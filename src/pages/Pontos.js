@@ -106,7 +106,7 @@ export default function Pontos() {
         {!conta.acessoQR && (
           <section className="card stack" style={{ gap: 10, background: 'var(--band-bg)', color: 'var(--band-text)', border: 0 }}>
             <strong style={{ fontSize: 16 }}>Pegue sem parar o treino</strong>
-            <span className="small" style={{ opacity: 0.85 }}>Com o Hero você mostra o QR e retira água, gel e eletrólito nos pontos. 30 créditos por mês.</span>
+            <span className="small" style={{ opacity: 0.85 }}>Com o Runner (10 créditos por mês) ou o Hero (30) você mostra o QR e retira água, gel e eletrólito nos pontos.</span>
             <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Ver planos</Link>
           </section>
         )}

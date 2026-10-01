@@ -82,9 +82,9 @@ export default function Inicio() {
           <section className="card accent stack" style={{ gap: 12 }}>
             <span className="h3">Retire água e gel na sua rota</span>
             <p className="small" style={{ margin: 0, color: 'var(--text-2)' }}>
-              O acesso aos pontos Runergy faz parte do plano Hero: 30 créditos por mês para água, carbo gel e eletrólito.
+              O acesso aos pontos Runergy vem nos planos Runner (10 créditos por mês) e Hero (30 créditos por mês) para água, carbo gel e eletrólito.
             </p>
-            <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Conhecer o plano Hero</Link>
+            <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Ver planos</Link>
           </section>
         )}
 

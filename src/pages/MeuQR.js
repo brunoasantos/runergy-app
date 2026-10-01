@@ -94,11 +94,11 @@ export default function MeuQR() {
         {!acesso ? (
           <section className="card stack" style={{ gap: 12, textAlign: 'center', alignItems: 'center', padding: 24 }}>
             <span className="icon-tile" style={{ width: 64, height: 64, borderRadius: 18 }}><Icon name="qr" size={32} /></span>
-            <h1 className="h2">Seu QR libera os pontos com o plano Hero</h1>
+            <h1 className="h2">Seu QR libera os pontos com os planos Runner e Hero</h1>
             <p className="small" style={{ margin: 0, color: 'var(--text-2)' }}>
-              Seu plano atual é <strong>{plano.nome || 'Grátis'}</strong>. Com o Hero você tem 30 créditos por mês para retirar água, carbo gel e eletrólito nos pontos Runergy.
+              Seu plano atual é <strong>{plano.nome || 'Grátis'}</strong>. Com o Runner você tem 10 créditos por mês e com o Hero, 30, para retirar água, carbo gel e eletrólito nos pontos Runergy.
             </p>
-            <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Quero ser Hero</Link>
+            <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Ver planos</Link>
           </section>
         ) : (
           <>

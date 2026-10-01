@@ -10,7 +10,7 @@ const MOTIVOS = {
   CODIGO_INVALIDO: 'QR não reconhecido.',
   CODIGO_EXPIRADO: 'Esse QR expirou. Peça para o atleta atualizar a tela.',
   CODIGO_JA_USADO: 'Esse QR já foi usado.',
-  PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: só o plano Hero).',
+  PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: só os planos Runner e Hero).',
   SEM_CREDITOS: 'O atleta está sem créditos neste mês.',
 }
 

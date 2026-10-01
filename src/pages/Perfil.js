@@ -11,7 +11,6 @@ import Icon from '../components/Icon'
 export default function Perfil() {
   const { perfil, ehEquipe, conta, sair, recarregarPerfil } = useAuth()
   const tema = useTema()
-  const plano = perfil.planos || {}
   const maxCred = Math.max(conta.creditosMes || 0, perfil.creditos || 0, 1)
   const [editando, setEditando] = useState(false)
   const [nome, setNome] = useState(perfil.nome || '')
@@ -49,11 +48,11 @@ export default function Perfil() {
           <div className="stack" style={{ gap: 8 }}>
             <div className="row between small"><span style={{ color: 'var(--text-2)' }}>Créditos disponíveis</span><strong>{conta.ilimitado ? 'Ilimitado' : `${perfil.creditos}${conta.creditosMes && perfil.creditos <= conta.creditosMes ? ` de ${conta.creditosMes}` : ''}`}</strong></div>
             <div className="bar"><span style={{ width: conta.ilimitado ? '100%' : `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} /></div>
-            <span className="tiny muted">{conta.acessoQR ? `Acesso a todos os pontos Runergy.${conta.creditosMes ? ` Renova para ${conta.creditosMes} no dia 1º de cada mês.` : ''}` : 'Sem acesso aos pontos — disponível no plano Hero.'}</span>
+            <span className="tiny muted">{conta.acessoQR ? `Acesso a todos os pontos Runergy.${conta.creditosMes ? ` Renova para ${conta.creditosMes} no dia 1º de cada mês.` : ''}` : 'Sem acesso aos pontos — disponível nos planos Runner e Hero.'}</span>
           </div>
           {conta.tipo === 'cliente' && (
             <Link to="/planos" className="btn btn-ghost btn-block" style={{ textDecoration: 'none' }}>
-              {plano.acesso_totem ? 'Ver planos' : 'Quero ser Hero'}
+              Ver planos
             </Link>
           )}
         </section>

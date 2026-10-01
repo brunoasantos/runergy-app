@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import Icon from './Icon'
 
-// Quem tem QR (Hero, atleta, equipe) vê "Meu QR" no centro; quem não tem vê "Planos".
+// Quem tem QR (Runner, Hero, atleta, equipe) vê "Meu QR" no centro; quem não tem vê "Planos".
 export default function BottomNav() {
   const { conta } = useAuth()
   const cls = ({ isActive }) => (isActive ? 'active' : undefined)
