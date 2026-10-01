@@ -11,6 +11,8 @@ import { useToast } from '../../components/Toast'
 export default function Painel() {
   const { user, perfil, conta, recarregarPerfil } = useAuth()
   const [consumindo, setConsumindo] = useState(null)
+  const [filtroEnt, setFiltroEnt] = useState('todas') // todas | corredores | equipe
+  const [pagEnt, setPagEnt] = useState(1)
   const ehAdmin = perfil?.papel === 'admin'
   const ponto = usePonto()
   const [toastEl, toast] = useToast()
@@ -23,7 +25,7 @@ export default function Painel() {
     if (!ponto.codigo) return
     const desde = inicioDoDiaSP()
     const [ret, abo, ass, est] = await Promise.all([
-      supabase.from('retiradas').select('id, suprimento, atleta_id, atleta_nome, criado_em').eq('totem_code', ponto.codigo).gte('criado_em', desde).order('criado_em', { ascending: false }),
+      supabase.from('retiradas').select('id, suprimento, atleta_id, atleta_nome, criado_em, origem').eq('totem_code', ponto.codigo).gte('criado_em', desde).order('criado_em', { ascending: false }),
       supabase.from('abordagens').select('id', { count: 'exact', head: true }).eq('totem_code', ponto.codigo).gte('criado_em', desde),
       supabase.from('assinantes').select('id', { count: 'exact', head: true }).gte('criado_em', desde),
       supabase.from('estoque_ponto').select('suprimento, quantidade, capacidade').eq('totem_code', ponto.codigo),
@@ -102,7 +104,7 @@ export default function Painel() {
 
         {!dados ? <div className="skeleton" style={{ height: 180 }} /> : (
           <div className="kpis four">
-            <div className="kpi"><span className="num" style={{ color: 'var(--accent-text)' }}>{dados.retiradas.length}</span><span className="tiny muted">entregas</span></div>
+            <div className="kpi"><span className="num" style={{ color: 'var(--accent-text)' }}>{dados.retiradas.length}</span><span className="tiny muted">entregas{dados.retiradas.some((x) => x.origem === 'equipe') ? ` · ${dados.retiradas.filter((x) => x.origem === 'equipe').length} da equipe` : ''}</span></div>
             <div className="kpi"><span className="num">{dados.atletas}</span><span className="tiny muted">atletas diferentes</span></div>
             <div className="kpi"><span className="num">{dados.abordagens}</span><span className="tiny muted">abordagens{conversao != null ? ` · ${conversao}% retiraram` : ''}</span></div>
             {ehAdmin
@@ -179,21 +181,59 @@ export default function Painel() {
           )}
         </section>
 
-        <section className="stack" aria-label="Últimas entregas">
-          <span className="label-caps">Últimas entregas</span>
-          {dados && dados.retiradas.length === 0 && <p className="small muted" style={{ margin: 0 }}>Nenhuma entrega hoje neste ponto.</p>}
-          {(dados?.retiradas || []).slice(0, 12).map((r) => (
-            <div key={r.id} className="card tight row">
-              <span className="icon-tile"><Icon name={suprimento(r.suprimento).icon} /></span>
-              <div className="grow"><div style={{ fontWeight: 700 }} className="ellipsis">{r.atleta_nome || 'Atleta'}</div><div className="small muted">{suprimento(r.suprimento).label}</div></div>
-              <span className="small muted">{fmtHora(r.criado_em)}</span>
-            </div>
-          ))}
-        </section>
+        <ListaEntregas retiradas={dados?.retiradas} filtro={filtroEnt} setFiltro={(f) => { setFiltroEnt(f); setPagEnt(1) }} pagina={pagEnt} setPagina={setPagEnt} />
 
         <Link to="/equipe" className="btn btn-primary btn-block btn-lg" style={{ marginTop: 8 }}><Icon name="scan" />Voltar a escanear</Link>
       </main>
       {toastEl}
     </div>
+  )
+}
+
+const POR_PAGINA = 8
+const FILTROS = [['todas', 'Todas'], ['corredores', 'Corredores'], ['equipe', 'Equipe']]
+
+/** Entregas do dia: compactas, com filtro e paginação (no celular, páginas são melhores que rolagem dentro da rolagem). */
+function ListaEntregas({ retiradas, filtro, setFiltro, pagina, setPagina }) {
+  const todas = retiradas || []
+  const lista = todas.filter((r) => filtro === 'todas' || (filtro === 'equipe' ? r.origem === 'equipe' : r.origem !== 'equipe'))
+  const paginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA))
+  const pag = Math.min(pagina, paginas)
+  const visiveis = lista.slice((pag - 1) * POR_PAGINA, pag * POR_PAGINA)
+  return (
+    <section className="stack" style={{ gap: 10 }} aria-label="Entregas de hoje">
+      <div className="row between" style={{ gap: 8 }}>
+        <span className="label-caps" style={{ whiteSpace: 'nowrap' }}>Entregas de hoje · {todas.length}</span>
+      </div>
+      <div className="chips" role="group" aria-label="Filtrar entregas">
+        {FILTROS.map(([k, l]) => (
+          <button key={k} type="button" className="chip" aria-pressed={filtro === k} onClick={() => setFiltro(k)}>
+            {l} · {k === 'todas' ? todas.length : todas.filter((r) => (k === 'equipe' ? r.origem === 'equipe' : r.origem !== 'equipe')).length}
+          </button>
+        ))}
+      </div>
+      {retiradas && lista.length === 0 && <p className="small muted" style={{ margin: 0 }}>Nenhuma entrega aqui hoje.</p>}
+      {visiveis.length > 0 && (
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          {visiveis.map((r, i) => (
+            <div key={r.id} className="row" style={{ gap: 12, padding: '10px 14px', borderTop: i ? '1px solid var(--line)' : 0, minHeight: 52 }}>
+              <span style={{ color: 'var(--orange)', display: 'inline-flex', flexShrink: 0 }}><Icon name={suprimento(r.suprimento).icon} size={20} /></span>
+              <div className="grow" style={{ minWidth: 0 }}>
+                <div className="ellipsis" style={{ fontWeight: 700, fontSize: 14 }}>{r.atleta_nome || 'Corredor'}</div>
+                <div className="small muted">{suprimento(r.suprimento).label}{r.origem === 'equipe' ? ' · consumo da equipe' : ''}</div>
+              </div>
+              <span className="small muted" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtHora(r.criado_em)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {paginas > 1 && (
+        <div className="row between" style={{ gap: 8 }}>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={pag <= 1} onClick={() => setPagina(pag - 1)} aria-label="Página anterior"><Icon name="back" size={16} />Anterior</button>
+          <span className="small muted" style={{ fontVariantNumeric: 'tabular-nums' }}>{(pag - 1) * POR_PAGINA + 1}–{Math.min(pag * POR_PAGINA, lista.length)} de {lista.length}</span>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={pag >= paginas} onClick={() => setPagina(pag + 1)} aria-label="Próxima página">Próxima<Icon name="chevron" size={16} /></button>
+        </div>
+      )}
+    </section>
   )
 }
