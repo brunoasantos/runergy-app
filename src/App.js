@@ -7,6 +7,11 @@ import { deveAbrirNoModoEquipe, salvarModo, marcarSessao } from './lib/modo'
 
 import Entrar from './pages/Entrar'
 import EntrarEquipe from './pages/EntrarEquipe'
+import CriarConta from './pages/CriarConta'
+import NovaSenha from './pages/NovaSenha'
+import Pontos from './pages/Pontos'
+import Planos from './pages/Planos'
+import { PEDIR_NOVA_SENHA } from './lib/cadastro'
 import BemVindo from './pages/BemVindo'
 import Inicio from './pages/Inicio'
 import MeuQR from './pages/MeuQR'
@@ -32,7 +37,11 @@ function Protegida({ children, equipe = false }) {
   const loc = useLocation()
   if (carregando || (session && !perfil)) return <Carregando />
   if (!session) return <Navigate to="/entrar" replace state={{ de: loc.pathname }} />
-  if (!perfil.nome && loc.pathname !== '/bem-vindo') return <Navigate to="/bem-vindo" replace />
+  // Acabou de confirmar o código do "Esqueci minha senha": cria a senha nova antes de qualquer coisa
+  let novaSenha = false
+  try { novaSenha = sessionStorage.getItem(PEDIR_NOVA_SENHA) === '1' } catch (e) {}
+  if (novaSenha && loc.pathname !== '/nova-senha') return <Navigate to="/nova-senha" replace />
+  if (!perfil.nome && !novaSenha && loc.pathname !== '/bem-vindo') return <Navigate to="/bem-vindo" replace />
   if (equipe && !ehEquipe) return <Navigate to="/" replace />
   if (equipe) salvarModo('equipe')
   // Ao abrir o app: quem estava no modo equipe (ou operador) volta direto para o Scanner
@@ -58,6 +67,10 @@ export default function App() {
             <Routes>
               <Route path="/entrar" element={<SoDeslogado><Entrar /></SoDeslogado>} />
               <Route path="/entrar/equipe" element={<SoDeslogado><EntrarEquipe /></SoDeslogado>} />
+              <Route path="/criar-conta" element={<SoDeslogado><CriarConta /></SoDeslogado>} />
+              <Route path="/nova-senha" element={<Protegida><NovaSenha /></Protegida>} />
+              <Route path="/pontos" element={<Protegida><Pontos /></Protegida>} />
+              <Route path="/planos" element={<Protegida><Planos /></Protegida>} />
               <Route path="/bem-vindo" element={<Protegida><BemVindo /></Protegida>} />
               <Route path="/" element={<Protegida><Inicio /></Protegida>} />
               <Route path="/qr" element={<Protegida><MeuQR /></Protegida>} />

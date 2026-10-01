@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { saudacao, primeiroNome, suprimento, fmtDia, fmtHora, distanciaKm, fmtKm, LINK_PLANOS } from '../lib/format'
+import { saudacao, primeiroNome, suprimento, fmtDia, fmtHora, distanciaKm, fmtKm } from '../lib/format'
 import BottomNav from '../components/BottomNav'
 import InstallPrompt from '../components/InstallPrompt'
 import Icon from '../components/Icon'
@@ -84,7 +84,7 @@ export default function Inicio() {
             <p className="small" style={{ margin: 0, color: 'var(--text-2)' }}>
               O acesso aos pontos Runergy faz parte do plano Hero: 30 créditos por mês para água, carbo gel e eletrólito.
             </p>
-            <a href={LINK_PLANOS} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-block">Conhecer o plano Hero</a>
+            <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Conhecer o plano Hero</Link>
           </section>
         )}
 
@@ -114,9 +114,12 @@ export default function Inicio() {
 
         <div className="row between" style={{ marginTop: 4 }}>
           <h2 className="h3">Pontos Runergy</h2>
-          {!posicao && navigator.geolocation && (
-            <button className="btn-link" onClick={pedirLocalizacao} style={{ fontSize: 13 }}>Ver distância</button>
-          )}
+          <div className="row" style={{ gap: 12 }}>
+            {!posicao && navigator.geolocation && (
+              <button className="btn-link" onClick={pedirLocalizacao} style={{ fontSize: 13 }}>Ver distância</button>
+            )}
+            <Link to="/pontos" className="btn-link" style={{ fontSize: 13, textDecoration: 'none' }}>Ver no mapa</Link>
+          </div>
         </div>
 
         <div className="stack">

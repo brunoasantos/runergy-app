@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { mensagemErro, LINK_PLANOS } from '../lib/format'
+import { mensagemErro } from '../lib/format'
 import PageHeader from '../components/PageHeader'
 import BottomNav from '../components/BottomNav'
 import Icon from '../components/Icon'
@@ -98,7 +98,7 @@ export default function MeuQR() {
             <p className="small" style={{ margin: 0, color: 'var(--text-2)' }}>
               Seu plano atual é <strong>{plano.nome || 'Grátis'}</strong>. Com o Hero você tem 30 créditos por mês para retirar água, carbo gel e eletrólito nos pontos Runergy.
             </p>
-            <a href={LINK_PLANOS} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-block">Quero ser Hero</a>
+            <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Quero ser Hero</Link>
           </section>
         ) : (
           <>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useTema } from '../lib/temaCtx'
-import { brl, mensagemErro, LINK_PLANOS } from '../lib/format'
+import { brl, mensagemErro } from '../lib/format'
 import BottomNav from '../components/BottomNav'
 import ThemeSwitch from '../components/ThemeSwitch'
 import Icon from '../components/Icon'
@@ -52,9 +52,9 @@ export default function Perfil() {
             <span className="tiny muted">{conta.acessoQR ? `Acesso a todos os pontos Runergy.${conta.creditosMes ? ` Renova para ${conta.creditosMes} no dia 1º de cada mês.` : ''}` : 'Sem acesso aos pontos — disponível no plano Hero.'}</span>
           </div>
           {conta.tipo === 'cliente' && (
-            <a href={LINK_PLANOS} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-block">
+            <Link to="/planos" className="btn btn-ghost btn-block" style={{ textDecoration: 'none' }}>
               {plano.acesso_totem ? 'Ver planos' : 'Quero ser Hero'}
-            </a>
+            </Link>
           )}
         </section>
 
@@ -85,6 +85,9 @@ export default function Perfil() {
               <span style={{ color: 'var(--orange)' }}><Icon name="user" size={20} /></span><span className="grow">Editar nome</span><Icon name="chevron" size={18} />
             </button>
           )}
+          <Link className="list-link" to="/nova-senha" style={{ textDecoration: 'none' }}>
+            <span style={{ color: 'var(--orange)' }}><Icon name="keyboard" size={20} /></span><span className="grow">Alterar senha</span><Icon name="chevron" size={18} />
+          </Link>
           <div className="list-link" aria-disabled="true">
             <span style={{ color: 'var(--orange)' }}><Icon name="watch" size={20} /></span><span className="grow">Relógio e Wallet</span><span className="pill neutral">Em breve</span>
           </div>
