@@ -1,6 +1,19 @@
 import { useEffect, useState, useCallback } from 'react'
 
-const KEY = 'runergy_tema' // 'auto' | 'light' | 'dark'
+// Padrão: claro. O usuário muda para escuro (ou automático) quando quiser.
+// Chave v2: ignora o 'auto' que a versão anterior gravava sozinha; mantém escolhas explícitas.
+const KEY = 'runergy_tema_v2' // 'light' | 'dark' | 'auto'
+const KEY_V1 = 'runergy_tema'
+const PADRAO = 'light'
+
+function lerPreferencia() {
+  try {
+    const v2 = localStorage.getItem(KEY)
+    if (v2) return v2
+    const v1 = localStorage.getItem(KEY_V1)
+    return v1 === 'dark' ? 'dark' : PADRAO
+  } catch (e) { return PADRAO }
+}
 
 function resolve(pref) {
   if (pref === 'light' || pref === 'dark') return pref
@@ -16,9 +29,7 @@ function apply(pref) {
 }
 
 export function useTheme() {
-  const [pref, setPref] = useState(() => {
-    try { return localStorage.getItem(KEY) || 'auto' } catch (e) { return 'auto' }
-  })
+  const [pref, setPref] = useState(lerPreferencia)
   const [theme, setTheme] = useState(() => resolve(pref))
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import React from 'react'
 
 export default function ThemeSwitch({ tema }) {
-  const opts = [['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Escuro']]
+  const opts = [['light', 'Claro'], ['dark', 'Escuro'], ['auto', 'Automático']]
   return (
     <div className="segmented" role="group" aria-label="Tema do app">
       {opts.map(([v, l]) => (
