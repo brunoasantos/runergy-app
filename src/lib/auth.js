@@ -55,7 +55,7 @@ export function AuthProvider({ children }) {
     user: session?.user || null,
     perfil,
     carregando,
-    ehEquipe: !!perfil && ['equipe', 'admin'].includes(perfil.papel),
+    ehEquipe: !!perfil && ['equipe', 'operador', 'supervisor', 'admin'].includes(perfil.papel),
     recarregarPerfil: () => carregarPerfil(session?.user?.id),
     sair,
   }
