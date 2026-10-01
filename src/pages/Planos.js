@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { brl, mensagemErro } from '../lib/format'
-import { UFS, mascaraTel, mascaraCep, buscarCep, SITE_URL } from '../lib/cadastro'
+import { UFS, mascaraTel, mascaraCep, buscarCep } from '../lib/cadastro'
 import BottomNav from '../components/BottomNav'
 import PageHeader from '../components/PageHeader'
 
@@ -66,14 +66,13 @@ export default function Planos() {
     const dados = { nome: perfil.nome, ...f }
     const r1 = await supabase.rpc('salvar_meu_cadastro', { p: dados })
     if (r1.error) { setErro(mensagemErro(r1.error)); setEnviando(false); return }
-    const r2 = await supabase.from('assinantes').insert([{
-      nome: perfil.nome, email: perfil.email, telefone: f.telefone, plano: plano.id, plano_nome: plano.nome, preco: plano.preco,
-      cep: f.cep, cidade: f.cidade.trim(), estado: f.estado, endereco: f.endereco.trim(), numero: f.numero.trim(), complemento: f.complemento.trim(),
-      status: 'pendente',
-    }])
-    if (r2.error) { setErro('Não foi possível registrar agora. Tente de novo em instantes.'); setEnviando(false); return }
-    // O site guarda os links de pagamento do Mercado Pago e devolve a pessoa para o app depois
-    window.location.href = `${SITE_URL}/pagar/${plano.id}?email=${encodeURIComponent(perfil.email)}&origem=app`
+    // Cria a assinatura no Mercado Pago (Edge Function mp-checkout) e abre o link de pagamento
+    const { data, error } = await supabase.functions.invoke('mp-checkout', { body: {
+      plano: plano.id, email: perfil.email, nome: perfil.nome, telefone: f.telefone, cep: f.cep, cidade: f.cidade.trim(), estado: f.estado,
+      endereco: f.endereco.trim(), numero: f.numero.trim(), complemento: f.complemento.trim(), origem: 'app',
+    } })
+    if (error || !data?.link) { setErro('Não foi possível abrir o pagamento agora. Tente de novo em instantes.'); setEnviando(false); return }
+    window.location.href = data.link
   }
 
   return (
