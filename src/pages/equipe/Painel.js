@@ -231,6 +231,7 @@ function VendidoHoje({ vendas, onFechar, onEstornado }) {
   const [estornando, setEstornando] = useState(null) // { id, motivo }
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
+  const fecharEstorno = useCallback(() => setEstornando(null), [])
   const validas = vendas.filter((v) => !v.estornada_em)
   const paginas = Math.max(1, Math.ceil(vendas.length / VENDAS_POR_PAGINA))
   const visiveis = vendas.slice((pag - 1) * VENDAS_POR_PAGINA, pag * VENDAS_POR_PAGINA)
@@ -274,23 +275,9 @@ function VendidoHoje({ vendas, onFechar, onEstornado }) {
               </span>
               <span style={{ textAlign: 'right' }}>
                 <strong style={{ textDecoration: v.estornada_em ? 'line-through' : 'none' }}>{brl(v.total)}</strong>
-                {!v.estornada_em && estornando?.id !== v.id && <><br /><button type="button" className="btn-link" style={{ minHeight: 0, padding: 0, fontSize: 12 }} onClick={() => { setErro(''); setEstornando({ id: v.id, motivo: '' }) }}>Estornar</button></>}
+                {!v.estornada_em && <><br /><button type="button" className="btn-link" style={{ minHeight: 0, padding: 0, fontSize: 12 }} onClick={() => { setErro(''); setEstornando({ id: v.id, motivo: '', v }) }}>Estornar</button></>}
               </span>
             </div>
-            {estornando?.id === v.id && (
-              <div className="stack" style={{ gap: 8, background: 'var(--surface-2)', borderRadius: 14, padding: 12 }}>
-                <span className="small" style={{ fontWeight: 700 }}>Estornar {resumo(v)} · {brl(v.total)}? O valor sai do caixa e os itens voltam ao estoque.</span>
-                <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-                  {MOTIVOS.map((m) => <button key={m} type="button" className="chip" style={{ minHeight: 36, padding: '6px 12px', fontSize: 13 }} aria-pressed={estornando.motivo === m} onClick={() => setEstornando((e) => ({ ...e, motivo: m }))}>{m}</button>)}
-                </div>
-                <input className="input" aria-label="Motivo do estorno" placeholder="Ou escreva o motivo" value={MOTIVOS.includes(estornando.motivo) ? '' : estornando.motivo} onChange={(e) => setEstornando((x) => ({ ...x, motivo: e.target.value }))} />
-                {erro && <div className="alert err small" role="alert">{erro}</div>}
-                <div className="row" style={{ gap: 8 }}>
-                  <button type="button" className="btn btn-ghost btn-sm grow" onClick={() => setEstornando(null)}>Voltar</button>
-                  <button type="button" className="btn btn-sm grow" style={{ background: 'var(--err)', color: '#fff' }} disabled={enviando || estornando.motivo.trim().length < 3} onClick={estornar}>{enviando ? 'Estornando…' : 'Confirmar estorno'}</button>
-                </div>
-              </div>
-            )}
           </div>
         ))}
       </div>
@@ -300,6 +287,25 @@ function VendidoHoje({ vendas, onFechar, onEstornado }) {
           <span className="small muted" style={{ fontVariantNumeric: 'tabular-nums' }}>{(pag - 1) * VENDAS_POR_PAGINA + 1}–{Math.min(pag * VENDAS_POR_PAGINA, vendas.length)} de {vendas.length}</span>
           <button type="button" className="btn btn-ghost btn-sm" disabled={pag >= paginas} onClick={() => setPag(pag + 1)} aria-label="Próxima página">Próxima<Icon name="chevron" size={16} /></button>
         </div>
+      )}
+      {estornando && (
+        <Folha titulo="Estornar venda" onFechar={fecharEstorno} largura={400}>
+          <div className="card stack" style={{ gap: 4 }}>
+            <strong>{resumo(estornando.v)} · {brl(estornando.v.total)}</strong>
+            <span className="small muted">{NOME_FORMA[estornando.v.forma_pagamento]} · {fmtHora(estornando.v.criado_em)}</span>
+          </div>
+          <span className="small" style={{ color: 'var(--text-2)' }}>O valor sai do caixa do dia e os itens voltam ao estoque. A venda fica no histórico como estornada.</span>
+          <span className="label-caps">Motivo</span>
+          <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+            {MOTIVOS.map((m) => <button key={m} type="button" className="chip" aria-pressed={estornando.motivo === m} onClick={() => setEstornando((e) => ({ ...e, motivo: m }))}>{m}</button>)}
+          </div>
+          <input className="input" aria-label="Motivo do estorno" placeholder="Ou escreva o motivo" value={MOTIVOS.includes(estornando.motivo) ? '' : estornando.motivo} onChange={(e) => setEstornando((x) => ({ ...x, motivo: e.target.value }))} />
+          {erro && <div className="alert err small" role="alert">{erro}</div>}
+          <div className="row" style={{ gap: 8 }}>
+            <button type="button" className="btn btn-ghost grow" onClick={fecharEstorno}>Voltar</button>
+            <button type="button" className="btn grow" style={{ background: 'var(--err)', color: '#fff' }} disabled={enviando || estornando.motivo.trim().length < 3} onClick={estornar}>{enviando ? 'Estornando…' : 'Confirmar estorno'}</button>
+          </div>
+        </Folha>
       )}
     </Folha>
   )
