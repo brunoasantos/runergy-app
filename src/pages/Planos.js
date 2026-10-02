@@ -148,11 +148,12 @@ function TrocaPlano({ ass, escolha, plano, atual, aoTrocar }) {
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [feito, setFeito] = useState(null)
+  const [confirmando, setConfirmando] = useState(false)
   const agendado = ass.plano_agendado
   const mesmo = escolha === atual
 
   useEffect(() => {
-    setSim(null); setErro(''); setFeito(null)
+    setSim(null); setErro(''); setFeito(null); setConfirmando(false)
     if (mesmo && !agendado) return
     let vivo = true
     supabase.functions.invoke('mp-trocar-plano', { body: { plano: escolha, simular: true } }).then(({ data, error }) => {
@@ -201,9 +202,24 @@ function TrocaPlano({ ass, escolha, plano, atual, aoTrocar }) {
             </span>
           )}
           {erro && <div className="alert err" role="alert">{erro}</div>}
-          <button type="button" className="btn btn-primary btn-block btn-lg" disabled={!sim || enviando} onClick={confirmar}>
-            {enviando ? 'Trocando…' : !sim ? 'Calculando…' : sim.tipo === 'upgrade' ? `Subir para ${plano.nome}` : sim.tipo === 'downgrade' ? `Mudar para ${plano.nome}` : `Manter ${plano.nome}`}
-          </button>
+          {!confirmando ? (
+            <button type="button" className="btn btn-primary btn-block btn-lg" disabled={!sim || enviando} onClick={() => setConfirmando(true)}>
+              {!sim ? 'Calculando…' : sim.tipo === 'upgrade' ? `Subir para ${plano.nome}` : sim.tipo === 'downgrade' ? `Mudar para ${plano.nome}` : `Manter ${plano.nome}`}
+            </button>
+          ) : (
+            <div className="stack" role="alertdialog" aria-label="Confirmar troca de plano" style={{ gap: 10, padding: 14, borderRadius: 16, background: 'var(--surface-2, rgba(0,0,0,0.04))' }}>
+              <strong>{sim.tipo === 'desfazer' ? `Manter o plano ${plano.nome}?` : `Tem certeza que quer mudar para o ${plano.nome}?`}</strong>
+              <span className="small" style={{ color: 'var(--text-2)' }}>
+                {sim.tipo === 'upgrade' && <>O novo plano vale agora e a cobrança passa de {brl(ass.preco)} para <strong>{brl(sim.preco)}/mês</strong> a partir de {fmtData(sim.a_partir_de)}.</>}
+                {sim.tipo === 'downgrade' && <>A troca acontece em {fmtData(sim.a_partir_de)} e a cobrança passa de {brl(ass.preco)} para <strong>{brl(sim.preco)}/mês</strong>. Até lá nada muda.</>}
+                {sim.tipo === 'desfazer' && <>A mudança agendada é cancelada e a cobrança continua {brl(ass.preco)}/mês.</>}
+              </span>
+              <div className="row" style={{ gap: 10 }}>
+                <button type="button" className="btn btn-ghost grow" disabled={enviando} onClick={() => setConfirmando(false)}>Voltar</button>
+                <button type="button" className="btn btn-primary grow" disabled={enviando} onClick={confirmar}>{enviando ? 'Trocando…' : 'Confirmar'}</button>
+              </div>
+            </div>
+          )}
           <span className="tiny muted" style={{ textAlign: 'center' }}>A troca é feita na mesma assinatura do Mercado Pago. Sem cobrança extra hoje.</span>
         </>
       ) : null}
