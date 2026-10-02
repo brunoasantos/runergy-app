@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { usePonto } from '../../lib/ponto'
-import { inicioDoDiaSP, suprimento, fmtHora, mensagemErro } from '../../lib/format'
+import { inicioDoDiaSP, suprimento, fmtHora, mensagemErro, rotuloCreditos } from '../../lib/format'
 import EquipeBand from '../../components/EquipeBand'
 import Icon from '../../components/Icon'
 import { useToast } from '../../components/Toast'
@@ -117,13 +117,14 @@ export default function Painel() {
           <div className="row between" style={{ gap: 8, flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontWeight: 700 }}>Meu consumo</div>
-              <div className="small muted">Pegou algo do ponto para você? Registre aqui. Baixa do estoque e {conta.ilimitado ? 'não gasta crédito (admin)' : `usa 1 dos seus créditos (${perfil.creditos} restantes)`}.</div>
+              <div className="small muted">Pegou algo do ponto para você? Registre aqui. Baixa do estoque e {conta.ilimitado ? 'não gasta crédito (admin, até 10 por dia)' : `usa créditos conforme o item (${perfil.creditos} restantes)`}.</div>
             </div>
           </div>
           <div className="supply-grid">
             {(ponto.ponto?.suprimentos || []).map((s) => (
-              <button key={s} type="button" className="supply" disabled={!!consumindo || (!conta.ilimitado && perfil.creditos <= 0)} onClick={() => consumir(s)}>
+              <button key={s} type="button" className="supply" disabled={!!consumindo || (!conta.ilimitado && perfil.creditos < suprimento(s).peso)} onClick={() => consumir(s)}>
                 <Icon name={suprimento(s).icon} size={22} /><span>{consumindo === s ? 'Registrando…' : suprimento(s).label}</span>
+                <span className="tiny" style={{ fontWeight: 700, opacity: 0.7 }}>{rotuloCreditos(suprimento(s).peso)}</span>
               </button>
             ))}
           </div>

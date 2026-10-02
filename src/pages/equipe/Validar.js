@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { usePonto } from '../../lib/ponto'
-import { mensagemErro, suprimento, SUPRIMENTOS } from '../../lib/format'
+import { mensagemErro, suprimento, SUPRIMENTOS, rotuloCreditos } from '../../lib/format'
 import EquipeBand from '../../components/EquipeBand'
 import Icon from '../../components/Icon'
 
@@ -12,7 +12,7 @@ const MOTIVOS = {
   CODIGO_JA_USADO: 'Esse QR já foi usado.',
   PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: só os planos Runner e Hero).',
   SEM_CREDITOS: 'O atleta está sem créditos neste mês.',
-  LIMITE_DIARIO: 'Conta admin já fez 10 retiradas hoje (limite diário). Libera amanhã.',
+  LIMITE_DIARIO: 'Conta admin já usou 10 créditos hoje (limite diário). Libera amanhã.',
 }
 
 export default function Validar() {
@@ -28,6 +28,8 @@ export default function Validar() {
 
   if (!state?.codigo) return <Navigate to="/equipe" replace />
   const info = state.info || {}
+  const semLimite = info.creditos >= 9999 || info.plano === 'demo'
+  const cabe = (s) => semLimite || (info.creditos ?? 0) >= suprimento(s).peso
 
   async function confirmar() {
     if (!item || enviando) return
@@ -68,8 +70,9 @@ export default function Validar() {
             <h2 className="h3">O que vai levar?</h2>
             <div className="supply-grid" role="group" aria-label="Escolha o item">
               {Object.keys(SUPRIMENTOS).map((s) => (
-                <button key={s} className="supply" aria-pressed={item === s} disabled={!disponiveis.includes(s)} onClick={() => setItem(s)}>
+                <button key={s} className="supply" aria-pressed={item === s} disabled={!disponiveis.includes(s) || !cabe(s)} onClick={() => setItem(s)}>
                   <Icon name={suprimento(s).icon} size={32} />{suprimento(s).label}
+                  <span className="tiny" style={{ fontWeight: 700, opacity: 0.75 }}>{rotuloCreditos(suprimento(s).peso)}</span>
                 </button>
               ))}
             </div>
@@ -77,7 +80,7 @@ export default function Validar() {
             {erro && <div className="alert err" role="alert">{erro}</div>}
             <div className="stack" style={{ marginTop: 'auto', gap: 8 }}>
               <button className="btn btn-primary btn-block btn-lg" disabled={!item || enviando || !ponto.ponto} onClick={confirmar}>
-                {enviando ? 'Confirmando…' : item ? `Confirmar entrega · ${suprimento(item).label}` : 'Escolha o item'}
+                {enviando ? 'Confirmando…' : item ? `Confirmar · ${suprimento(item).label} (${rotuloCreditos(suprimento(item).peso)})` : 'Escolha o item'}
               </button>
               <button className="btn btn-link" onClick={() => nav('/equipe', { replace: true })}>Cancelar</button>
             </div>

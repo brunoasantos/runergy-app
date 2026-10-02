@@ -4,7 +4,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { suprimento, distanciaKm, fmtKm } from '../lib/format'
+import { suprimento, distanciaKm, fmtKm, rotuloCreditos } from '../lib/format'
 import BottomNav from '../components/BottomNav'
 import Icon from '../components/Icon'
 
@@ -98,7 +98,7 @@ export default function Pontos() {
               <a href={rota(p)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ fontWeight: 800, color: 'var(--accent-text)', textDecoration: 'none' }}>Rota</a>
             </div>
             <div className="row" style={{ gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-              {(p.suprimentos || []).map((s) => <span key={s} className="pill neutral">{suprimento(s).label}</span>)}
+              {(p.suprimentos || []).map((s) => <span key={s} className="pill neutral">{suprimento(s).label} · {rotuloCreditos(suprimento(s).peso)}</span>)}
             </div>
           </button>
         ))}

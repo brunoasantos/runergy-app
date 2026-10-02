@@ -22,6 +22,10 @@ import Perfil from './pages/Perfil'
 import Scanner from './pages/equipe/Scanner'
 import Validar from './pages/equipe/Validar'
 import Painel from './pages/equipe/Painel'
+import { sincronizarSuprimentos } from './lib/suprimentos'
+
+// Peso (créditos) e preço avulso de cada item vêm do banco
+sincronizarSuprimentos()
 
 
 function Carregando() {

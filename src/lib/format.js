@@ -1,12 +1,14 @@
 export const SUPRIMENTOS = {
-  agua: { label: 'Água', detalhe: 'Copo 200 ml', icon: 'drop' },
-  gel: { label: 'Carbo Gel', detalhe: 'Sachê 40 g', icon: 'bolt' },
-  eletrolito: { label: 'Eletrólito', detalhe: 'Sachê 20 g', icon: 'bottle' },
+  // peso = créditos por retirada; preco = venda avulsa (R$). Atualizados do banco por lib/suprimentos.js
+  agua: { label: 'Água', detalhe: 'Copo 200 ml', icon: 'drop', peso: 1, preco: 3 },
+  gel: { label: 'Carbo Gel', detalhe: 'Sachê 40 g', icon: 'bolt', peso: 3, preco: 9 },
+  eletrolito: { label: 'Eletrólito', detalhe: 'Sachê 20 g', icon: 'bottle', peso: 2, preco: 6 },
 }
 
 export function suprimento(id) {
-  return SUPRIMENTOS[id] || { label: id, detalhe: '', icon: 'drop' }
+  return SUPRIMENTOS[id] || { label: id, detalhe: '', icon: 'drop', peso: 1, preco: 0 }
 }
+export const rotuloCreditos = (n) => `${n} ${n === 1 ? 'crédito' : 'créditos'}`
 
 const tz = 'America/Sao_Paulo'
 export const fmtHora = (d) => new Date(d).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: tz })
@@ -46,7 +48,8 @@ const ERROS = {
   SUPRIMENTO_INDISPONIVEL: 'Esse item não está disponível neste ponto.',
   PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: só os planos Runner e Hero).',
   SEM_CREDITOS: 'Sem créditos neste mês. Eles renovam no dia 1º.',
-  LIMITE_DIARIO: 'Limite de 10 retiradas por dia da conta admin atingido. Libera amanhã.',
+  LIMITE_DIARIO: 'Limite de 10 créditos por dia da conta admin atingido. Libera amanhã.',
+  CREDITOS_INSUFICIENTES: 'Créditos insuficientes para esse item. Escolha um item que custe menos.',
   SEM_ESTOQUE: 'Acabou esse item no ponto. Reponha o estoque no painel.',
 }
 
