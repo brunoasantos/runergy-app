@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import Icon from './Icon'
 
-/** Folha que sobe de baixo (modal do celular). Fecha no ✕, no Esc ou tocando fora. */
+/** Modal centralizado. Fecha no ✕, no Esc ou tocando fora. */
 export default function Folha({ titulo, onFechar, children }) {
   const ref = useRef(null)
   useEffect(() => {

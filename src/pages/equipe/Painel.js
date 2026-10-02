@@ -223,7 +223,11 @@ function ListaEntregas({ retiradas, filtro, setFiltro, pagina, setPagina }) {
 }
 
 /** Folha "Vendido hoje": total por item, por forma de pagamento e cada venda do dia. */
+const VENDAS_POR_PAGINA = 8
 function VendidoHoje({ vendas, onFechar }) {
+  const [pag, setPag] = useState(1)
+  const paginas = Math.max(1, Math.ceil(vendas.length / VENDAS_POR_PAGINA))
+  const visiveis = vendas.slice((pag - 1) * VENDAS_POR_PAGINA, pag * VENDAS_POR_PAGINA)
   const porItem = {}
   for (const v of vendas) for (const i of v.itens || []) porItem[i.nome] = (porItem[i.nome] || 0) + Number(i.qtd || 0)
   const porForma = {}
@@ -240,13 +244,20 @@ function VendidoHoje({ vendas, onFechar }) {
       </div>
       <span className="label-caps">Cada venda</span>
       <div className="card stack" style={{ gap: 0, padding: '4px 16px' }}>
-        {vendas.map((v, n) => (
+        {visiveis.map((v, n) => (
           <div key={v.id} className="row between small" style={{ gap: 10, padding: '10px 0', borderTop: n ? '1px solid var(--surface-2)' : 0 }}>
             <span><strong>{(v.itens || []).map((i) => `${i.qtd} ${i.nome}`).join(' + ')}</strong><br /><span className="muted">{NOME_FORMA[v.forma_pagamento]} · {fmtHora(v.criado_em)}</span></span>
             <strong>{brl(v.total)}</strong>
           </div>
         ))}
       </div>
+      {paginas > 1 && (
+        <div className="row between" style={{ gap: 8 }}>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={pag <= 1} onClick={() => setPag(pag - 1)} aria-label="Página anterior"><Icon name="back" size={16} />Anterior</button>
+          <span className="small muted" style={{ fontVariantNumeric: 'tabular-nums' }}>{(pag - 1) * VENDAS_POR_PAGINA + 1}–{Math.min(pag * VENDAS_POR_PAGINA, vendas.length)} de {vendas.length}</span>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={pag >= paginas} onClick={() => setPag(pag + 1)} aria-label="Próxima página">Próxima<Icon name="chevron" size={16} /></button>
+        </div>
+      )}
     </Folha>
   )
 }
