@@ -26,7 +26,7 @@ export default function CancelarAssinatura() {
   const [feito, setFeito] = useState(null)
 
   useEffect(() => {
-    supabase.rpc('minha_assinatura').then(({ data }) => setAss((data || [])[0] || null))
+    supabase.rpc('minha_assinatura_v2').then(({ data }) => setAss((data || [])[0] || null))
   }, [])
 
   async function cancelar() {
