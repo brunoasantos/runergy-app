@@ -123,7 +123,13 @@ export default function Painel() {
           </div>
           <span className="small" style={{ color: '#CFCFCF' }}>Para quem não tem plano. Escolha os itens, receba e registre. Baixa do estoque na hora.</span>
           <Link to="/equipe/vender" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}><Icon name="plus" size={18} />Nova venda</Link>
-          {dados?.vendas?.slice(0, 3).map((v) => (
+          {dados?.vendas?.length > 0 && (() => {
+            // Resumo do dia por item: não cresce com o número de vendas
+            const t = {}
+            for (const v of dados.vendas) for (const i of v.itens || []) t[i.nome] = (t[i.nome] || 0) + Number(i.qtd || 0)
+            return <div className="small" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8 }}><span style={{ color: '#BDBDBD' }}>Vendido hoje: </span><strong>{Object.entries(t).map(([n, q]) => `${q} ${n}`).join(' · ')}</strong></div>
+          })()}
+          {dados?.vendas?.slice(0, 2).map((v) => (
             <div key={v.id} className="row between small" style={{ gap: 10, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8 }}>
               <span><strong>{(v.itens || []).map((i) => `${i.qtd} ${i.nome}`).join(' + ')}</strong><br /><span style={{ color: '#BDBDBD' }}>{NOME_FORMA[v.forma_pagamento]} · {fmtHora(v.criado_em)}</span></span>
               <strong>{brl(v.total)}</strong>
@@ -210,7 +216,7 @@ export default function Painel() {
   )
 }
 
-const POR_PAGINA = 8
+const POR_PAGINA = 5
 const FILTROS = [['todas', 'Todas'], ['corredores', 'Corredores'], ['equipe', 'Equipe']]
 
 /** Entregas do dia: compactas, com filtro e paginação (no celular, páginas são melhores que rolagem dentro da rolagem). */
