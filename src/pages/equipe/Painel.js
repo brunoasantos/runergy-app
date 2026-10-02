@@ -202,7 +202,8 @@ export default function Painel() {
 
         <ListaEntregas retiradas={dados?.retiradas} filtro={filtroEnt} setFiltro={(f) => { setFiltroEnt(f); setPagEnt(1) }} pagina={pagEnt} setPagina={setPagEnt} />
 
-        <Link to="/equipe" className="btn btn-primary btn-block btn-lg" style={{ marginTop: 8 }}><Icon name="scan" />Voltar a escanear</Link>
+        <Link to="/equipe/fechar" className="btn btn-ghost btn-block" style={{ marginTop: 8 }}><Icon name="check" size={18} />Fechar o dia (contagem e caixa)</Link>
+        <Link to="/equipe" className="btn btn-primary btn-block btn-lg"><Icon name="scan" />Voltar a escanear</Link>
       </main>
       {toastEl}
     </div>
