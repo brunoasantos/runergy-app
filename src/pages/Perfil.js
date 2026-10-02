@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useTema } from '../lib/temaCtx'
-import { brl, mensagemErro } from '../lib/format'
+import { brl, fmtData, mensagemErro } from '../lib/format'
 import BottomNav from '../components/BottomNav'
 import ThemeSwitch from '../components/ThemeSwitch'
 import Icon from '../components/Icon'
@@ -15,6 +15,12 @@ export default function Perfil() {
   const [editando, setEditando] = useState(false)
   const [nome, setNome] = useState(perfil.nome || '')
   const [erro, setErro] = useState('')
+  const [ass, setAss] = useState(null)
+  useEffect(() => {
+    if (conta.tipo !== 'cliente') return
+    supabase.rpc('minha_assinatura').then(({ data }) => setAss((data || [])[0] || null))
+  }, [conta.tipo, perfil.plano])
+  const cancelada = ass && ass.status === 'cancelado' && ass.acesso_ate && new Date(ass.acesso_ate) > new Date()
 
   async function salvarNome(e) {
     e.preventDefault()
@@ -50,10 +56,14 @@ export default function Perfil() {
             <div className="bar"><span style={{ width: conta.ilimitado ? '100%' : `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} /></div>
             <span className="tiny muted">{conta.acessoQR ? `Acesso a todos os pontos Runergy.${conta.creditosMes ? (perfil.tipo === 'cliente' && perfil.plano === 'hero' ? ` Todo dia 1º entram ${conta.creditosMes} e o que sobrar (até 30) continua com você.` : ` Renova para ${conta.creditosMes} no dia 1º de cada mês.`) : ''}` : 'Sem acesso aos pontos — disponível nos planos Runner e Hero.'}</span>
           </div>
+          {cancelada && <div className="alert warn small">Assinatura cancelada. Seus benefícios continuam até <strong>{fmtData(ass.acesso_ate)}</strong>; depois a conta vira Free.</div>}
           {conta.tipo === 'cliente' && (
             <Link to="/planos" className="btn btn-ghost btn-block" style={{ textDecoration: 'none' }}>
-              Ver planos
+              {cancelada ? 'Assinar de novo' : 'Ver planos'}
             </Link>
+          )}
+          {ass && ass.status === 'ativo' && ass.pelo_mp && (
+            <Link to="/assinatura/cancelar" className="small" style={{ textAlign: 'center', color: 'var(--text-2)', fontWeight: 600 }}>Cancelar assinatura</Link>
           )}
         </section>
 
