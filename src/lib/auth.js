@@ -40,6 +40,9 @@ export function AuthProvider({ children }) {
     if (!uid) { setPerfil(null); return null }
     const { data, error } = await supabase.from('perfis').select(PERFIL_COLS).eq('id', uid).maybeSingle()
     if (error) { console.warn('perfil', error.message); return null }
+    // Sessão de uma conta que não existe mais (excluída ou e-mail trocado): sai e volta para o login,
+    // em vez de ficar carregando para sempre
+    if (!data) { await supabase.auth.signOut().catch(() => {}); setSession(null); setPerfil(null); return null }
     setPerfil(data)
     return data
   }, [])
