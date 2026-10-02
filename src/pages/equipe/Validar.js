@@ -12,6 +12,7 @@ const MOTIVOS = {
   CODIGO_JA_USADO: 'Esse QR já foi usado.',
   PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: só os planos Runner e Hero).',
   SEM_CREDITOS: 'O atleta está sem créditos neste mês.',
+  LIMITE_DIARIO: 'Conta admin já fez 10 retiradas hoje (limite diário). Libera amanhã.',
 }
 
 export default function Validar() {

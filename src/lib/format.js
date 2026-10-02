@@ -46,6 +46,7 @@ const ERROS = {
   SUPRIMENTO_INDISPONIVEL: 'Esse item não está disponível neste ponto.',
   PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: só os planos Runner e Hero).',
   SEM_CREDITOS: 'Sem créditos neste mês. Eles renovam no dia 1º.',
+  LIMITE_DIARIO: 'Limite de 10 retiradas por dia da conta admin atingido. Libera amanhã.',
   SEM_ESTOQUE: 'Acabou esse item no ponto. Reponha o estoque no painel.',
 }
 
