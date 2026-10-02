@@ -55,6 +55,7 @@ export default function Validar() {
             {info.plano_nome && <div className="small muted">{info.plano_nome} · {info.creditos >= 9999 ? 'ilimitado' : `${info.creditos} créditos`}</div>}
           </div>
         </section>
+        {info.plano === 'demo' && <div className="alert warn small">Conta de demonstração: o crédito desconta (e recarrega sozinho), mas o estoque do ponto não muda. Não entregue produto por esta conta.</div>}
 
         {!info.valido ? (
           <>

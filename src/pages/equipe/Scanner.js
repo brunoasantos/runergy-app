@@ -70,7 +70,7 @@ export default function Scanner() {
   useEffect(() => {
     if (!ponto.codigo) return
     const desde = inicioDoDiaSP()
-    supabase.from('retiradas').select('suprimento', { count: 'exact' }).eq('totem_code', ponto.codigo).gte('criado_em', desde)
+    supabase.from('retiradas').select('suprimento', { count: 'exact' }).eq('totem_code', ponto.codigo).gte('criado_em', desde).neq('origem', 'demo')
       .then(({ data, count }) => setHoje({ total: count || 0, gel: (data || []).filter((r) => r.suprimento === 'gel').length, agua: (data || []).filter((r) => r.suprimento === 'agua').length }))
   }, [ponto.codigo, loc.key])
 

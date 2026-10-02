@@ -25,7 +25,7 @@ export default function Painel() {
     if (!ponto.codigo) return
     const desde = inicioDoDiaSP()
     const [ret, abo, ass, est] = await Promise.all([
-      supabase.from('retiradas').select('id, suprimento, atleta_id, atleta_nome, criado_em, origem').eq('totem_code', ponto.codigo).gte('criado_em', desde).order('criado_em', { ascending: false }),
+      supabase.from('retiradas').select('id, suprimento, atleta_id, atleta_nome, criado_em, origem').eq('totem_code', ponto.codigo).gte('criado_em', desde).neq('origem', 'demo').order('criado_em', { ascending: false }),
       supabase.from('abordagens').select('id', { count: 'exact', head: true }).eq('totem_code', ponto.codigo).gte('criado_em', desde),
       supabase.from('assinantes').select('id', { count: 'exact', head: true }).gte('criado_em', desde),
       supabase.from('estoque_ponto').select('suprimento, quantidade, capacidade').eq('totem_code', ponto.codigo),
