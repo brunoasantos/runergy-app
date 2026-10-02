@@ -30,6 +30,9 @@ export default function Planos() {
   const numRef = useRef(null)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [outroMp, setOutroMp] = useState(false)
+  const [emailMp, setEmailMp] = useState('')
+  const emailMpOk = !outroMp || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailMp.trim())
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }))
   const plano = PLANOS.find((p) => p.id === escolha)
 
@@ -66,7 +69,7 @@ export default function Planos() {
 
   async function assinar(e) {
     e.preventDefault()
-    if (!completo || enviando || escolha === atual) return
+    if (!completo || !emailMpOk || enviando || escolha === atual) return
     setEnviando(true); setErro('')
     const dados = { nome: perfil.nome, ...f }
     const r1 = await supabase.rpc('salvar_meu_cadastro', { p: dados })
@@ -75,6 +78,7 @@ export default function Planos() {
     const { data, error } = await supabase.functions.invoke('mp-checkout', { body: {
       plano: plano.id, email: perfil.email, nome: perfil.nome, telefone: f.telefone, cep: f.cep, cidade: f.cidade.trim(), estado: f.estado,
       endereco: f.endereco.trim(), numero: f.numero.trim(), complemento: f.complemento.trim(), origem: 'app',
+      email_mp: outroMp ? emailMp.trim().toLowerCase() : undefined,
     } })
     if (error || !data?.link) { setErro('Não foi possível abrir o pagamento agora. Tente de novo em instantes.'); setEnviando(false); return }
     window.location.href = data.link
@@ -130,8 +134,15 @@ export default function Planos() {
             <div className="field"><label htmlFor="pl-comp">Complemento</label>
               <input id="pl-comp" className="input" autoComplete="address-line2" placeholder="Apto, bloco…" value={f.complemento} onChange={(e) => set('complemento', e.target.value)} /></div>
           </div>
+          <label className="row small" style={{ gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
+            <input type="checkbox" checked={outroMp} onChange={(e) => setOutroMp(e.target.checked)} style={{ marginTop: 3 }} />
+            <span>Uso <strong>outro e-mail</strong> na minha conta do Mercado Pago <span className="muted">(o Mercado Pago só aceita pagar logado com o mesmo e-mail)</span></span>
+          </label>
+          {outroMp && <div className="field"><label htmlFor="pl-mp">E-mail da sua conta Mercado Pago</label>
+            <input id="pl-mp" className="input" type="email" inputMode="email" autoCapitalize="none" autoComplete="off" placeholder="voce@email.com" value={emailMp} onChange={(e) => setEmailMp(e.target.value)} />
+            <span className="tiny muted">Sua conta Runergy continua com {perfil.email}.</span></div>}
           {erro && <div className="alert err" role="alert">{erro}</div>}
-          <button className="btn btn-primary btn-block btn-lg" disabled={!completo || enviando || escolha === atual}>
+          <button className="btn btn-primary btn-block btn-lg" disabled={!completo || !emailMpOk || enviando || escolha === atual}>
             {enviando ? 'Abrindo pagamento…' : escolha === atual ? 'Esse é o seu plano' : `Assinar ${plano.nome}`}
           </button>
           <span className="tiny muted" style={{ textAlign: 'center' }}>Pagamento seguro no Mercado Pago. O plano libera assim que o pagamento é confirmado.</span>
