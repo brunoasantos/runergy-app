@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { saudacao, primeiroNome, suprimento, fmtDia, fmtHora, distanciaKm, fmtKm } from '../lib/format'
+import { saudacao, primeiroNome, suprimento, fmtDia, fmtHora, distanciaKm, fmtKm, fmtMes } from '../lib/format'
+import { useMeusEnvios } from './MeuKit'
 import BottomNav from '../components/BottomNav'
 import InstallPrompt from '../components/InstallPrompt'
 import Icon from '../components/Icon'
@@ -11,6 +12,13 @@ import { useDisponibilidade, estadoItem } from '../lib/disponibilidade'
 export default function Inicio() {
   const disp = useDisponibilidade()
   const { perfil, ehEquipe, conta } = useAuth()
+  const pago = conta.tipo === 'cliente' && ['starter', 'runner', 'hero'].includes(perfil.plano)
+  const envios = useMeusEnvios()
+  const kit = envios?.[0]
+  const chaveBV = `rg_boasvindas_${perfil.id}_${perfil.plano}`
+  const [bvVisto, setBvVisto] = useState(() => { try { return !!localStorage.getItem(chaveBV) } catch (e) { return true } })
+  const fecharBV = () => { try { localStorage.setItem(chaveBV, '1') } catch (e) {} setBvVisto(true) }
+  const ETAPA = { preparando: 'Preparando', postado: 'Postado · acompanhe o rastreio', entregue: 'Entregue' }
   const [pontos, setPontos] = useState(null)
   const [ultima, setUltima] = useState(null)
   const [posicao, setPosicao] = useState(null)
@@ -69,6 +77,31 @@ export default function Inicio() {
             <span style={{ width: conta.ilimitado ? '100%' : `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} />
           </div>
         </section>
+
+        {pago && !bvVisto && (
+          <section className="card stack" style={{ gap: 10, background: '#121212', color: '#FFFFFF', border: 0 }} aria-label="Boas-vindas">
+            <span style={{ fontSize: 'clamp(22px, 6.5vw, 26px)', fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', lineHeight: 1.1 }}>Boas-vindas ao {conta.planoCliente}!</span>
+            <span className="small" style={{ color: '#D6D6D6', lineHeight: 1.5 }}>
+              Seu kit {kit ? `de ${fmtMes(kit.competencia + 'T12:00:00')} ` : ''}já está sendo preparado e chega nos próximos dias. Quando for postado, o rastreio aparece em Meu kit.
+              {acesso ? ` Seu QR também está liberado: ${conta.creditosMes} créditos por mês nos pontos Runergy.` : ''}
+            </span>
+            <div className="row" style={{ gap: 10 }}>
+              <button type="button" className="btn btn-ghost grow" style={{ color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.3)' }} onClick={fecharBV}>Ok</button>
+              <Link to="/kit" onClick={fecharBV} className="btn btn-primary grow" style={{ textDecoration: 'none' }}>Ver meu kit</Link>
+            </div>
+          </section>
+        )}
+
+        {kit && bvVisto && (kit.status !== 'entregue' || (Date.now() - new Date(kit.entregue_em)) < 7 * 86400000) && (
+          <Link to="/kit" className="card tight row" style={{ textDecoration: 'none', color: 'var(--text)' }}>
+            <span className="icon-tile"><Icon name="bottle" /></span>
+            <span className="grow">
+              <span className="tiny muted" style={{ display: 'block', textTransform: 'capitalize' }}>Kit de {fmtMes(kit.competencia + 'T12:00:00')}</span>
+              <span style={{ fontWeight: 800 }}>{ETAPA[kit.status]}</span>
+            </span>
+            <Icon name="chevron" size={18} />
+          </Link>
+        )}
 
         {acesso ? (
           <Link to="/qr" className="card" style={{ background: 'var(--orange)', color: 'var(--on-orange)', textDecoration: 'none', border: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '20px 18px' }}>

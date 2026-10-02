@@ -12,6 +12,7 @@ import NovaSenha from './pages/NovaSenha'
 import Pontos from './pages/Pontos'
 import Planos from './pages/Planos'
 import CancelarAssinatura from './pages/CancelarAssinatura'
+import MeuKit from './pages/MeuKit'
 import { PEDIR_NOVA_SENHA } from './lib/cadastro'
 import BemVindo from './pages/BemVindo'
 import Inicio from './pages/Inicio'
@@ -78,6 +79,7 @@ export default function App() {
               <Route path="/pontos" element={<Protegida><Pontos /></Protegida>} />
               <Route path="/planos" element={<Protegida><Planos /></Protegida>} />
               <Route path="/assinatura/cancelar" element={<Protegida><CancelarAssinatura /></Protegida>} />
+              <Route path="/kit" element={<Protegida><MeuKit /></Protegida>} />
               <Route path="/bem-vindo" element={<Protegida><BemVindo /></Protegida>} />
               <Route path="/" element={<Protegida><Inicio /></Protegida>} />
               <Route path="/qr" element={<Protegida><MeuQR /></Protegida>} />

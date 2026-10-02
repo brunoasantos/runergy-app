@@ -63,6 +63,9 @@ export default function Perfil() {
               {cancelada ? 'Assinar de novo' : 'Ver planos'}
             </Link>
           )}
+          {conta.tipo === 'cliente' && ['starter', 'runner', 'hero'].includes(perfil.plano) && (
+            <Link to="/kit" className="btn btn-ghost btn-block" style={{ textDecoration: 'none' }}>Meu kit</Link>
+          )}
           {ass && ass.status === 'ativo' && ass.pelo_mp && (
             <Link to="/assinatura/cancelar" className="small" style={{ textAlign: 'center', color: 'var(--text-2)', fontWeight: 600 }}>Cancelar assinatura</Link>
           )}
