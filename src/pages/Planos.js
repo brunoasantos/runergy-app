@@ -9,8 +9,8 @@ import PageHeader from '../components/PageHeader'
 // Mesmos planos e benefícios do site (runergy-site/src/lib/planos.js)
 const PLANOS = [
   { id: 'starter', nome: 'Starter', preco: 59.9, resumo: 'Kit em casa todo mês', itens: ['6 sachês de carbo gel', '2 isotônicos', '2 pré-treinos em pó', 'Entrega mensal na sua porta'] },
-  { id: 'runner', nome: 'Runner', preco: 89.9, resumo: 'Kit em casa + 10 créditos nos pontos', qr: true, itens: ['Tudo do plano Starter', 'QR nos pontos: 10 créditos por mês', 'Camiseta, boné e meia Runergy (enviados uma vez, a partir da 2ª mensalidade)', 'Frete grátis'] },
-  { id: 'hero', nome: 'Hero', preco: 129.9, resumo: 'Tudo do Runner com 30 créditos nos pontos', qr: true, itens: ['Tudo do plano Runner', 'QR nos pontos: 30 créditos por mês', 'Óculos Baixa Pace (enviado uma vez, a partir da 2ª mensalidade)', 'Suporte VIP', 'Frete grátis'] },
+  { id: 'runner', nome: 'Runner', preco: 89.9, resumo: 'Kit em casa + 10 créditos para experimentar os pontos', qr: true, itens: ['Tudo do plano Starter', 'QR nos pontos: 10 créditos por mês', 'Camiseta, boné e meia Runergy (enviados uma vez, a partir da 2ª mensalidade)', 'Frete grátis'] },
+  { id: 'hero', nome: 'Hero', preco: 129.9, resumo: 'R$ 90 em produtos nos pontos todo mês · o que sobra acumula', qr: true, selo: 'Mais vantajoso', itens: ['Tudo do plano Runner', 'QR nos pontos: 30 créditos por mês', 'Créditos que sobram passam para o mês seguinte (até 30)', 'Óculos Baixa Pace (enviado uma vez, a partir da 2ª mensalidade)', 'Suporte VIP', 'Frete grátis'] },
 ]
 
 /** Assinar pelo app: escolhe o plano, confere o endereço do kit e segue para o pagamento no Mercado Pago. */
@@ -87,7 +87,7 @@ export default function Planos() {
             return (
               <button key={p.id} type="button" role="radio" aria-checked={on} className={`card tight plano-op${on ? ' sel' : ''}`} onClick={() => setEscolha(p.id)}>
                 <div className="row between" style={{ alignItems: 'baseline', gap: 8 }}>
-                  <strong style={{ fontSize: 17 }}>{p.nome}{p.qr && <span className="pill brand" style={{ marginLeft: 8 }}>QR nos pontos</span>}</strong>
+                  <strong style={{ fontSize: 17 }}>{p.nome}{p.qr && <span className="pill brand" style={{ marginLeft: 8 }}>QR nos pontos</span>}{p.selo && <span className="pill neutral" style={{ marginLeft: 6 }}>{p.selo}</span>}</strong>
                   <strong style={{ whiteSpace: 'nowrap' }}>{brl(p.preco)}<span className="tiny" style={{ fontWeight: 600 }}>/mês</span></strong>
                 </div>
                 <span className="small" style={{ color: 'var(--text-2)' }}>{atual === p.id ? 'Seu plano atual' : p.resumo}</span>
