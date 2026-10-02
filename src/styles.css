@@ -409,3 +409,8 @@ a { color: var(--accent-text); }
 .ponto-card, .plano-op { text-align: left; width: 100%; font: inherit; color: var(--text); display: flex; flex-direction: column; gap: 4px; cursor: pointer; border: 2px solid transparent; }
 .ponto-card.sel, .plano-op.sel { border-color: var(--orange); }
 .form-duas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+/* Meu consumo (Painel do dia): 4 por linha, compacto, para rolar menos */
+.supply-grid.compacto { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.supply-grid.compacto .supply { min-height: 0; padding: 10px 4px; gap: 3px; border-radius: 14px; font-size: 12px; line-height: 1.2; }
+.supply-grid.compacto .supply .tiny { font-size: 10px; }
+@media (max-width: 340px) { .supply-grid.compacto { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
