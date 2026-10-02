@@ -22,7 +22,7 @@ export default function Fechar() {
     if (!ponto.codigo) return
     supabase.from('estoque_ponto').select('suprimento, quantidade').eq('totem_code', ponto.codigo)
       .then(({ data }) => setEsperado(Object.fromEntries((data || []).map((r) => [r.suprimento, r.quantidade]))))
-    supabase.from('vendas').select('total, forma_pagamento').eq('totem_code', ponto.codigo).gte('criado_em', inicioDoDiaSP())
+    supabase.from('vendas').select('total, forma_pagamento').eq('totem_code', ponto.codigo).gte('criado_em', inicioDoDiaSP()).is('estornada_em', null)
       .then(({ data }) => {
         const v = data || []
         const soma = (f) => v.filter((x) => !f || x.forma_pagamento === f).reduce((a, x) => a + Number(x.total), 0)

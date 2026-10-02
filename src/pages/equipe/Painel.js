@@ -32,7 +32,7 @@ export default function Painel() {
       supabase.from('retiradas').select('id, suprimento, atleta_id, atleta_nome, criado_em, origem').eq('totem_code', ponto.codigo).gte('criado_em', desde).neq('origem', 'demo').order('criado_em', { ascending: false }),
       supabase.from('assinantes').select('id', { count: 'exact', head: true }).gte('criado_em', desde),
       supabase.from('estoque_ponto').select('suprimento, quantidade, capacidade').eq('totem_code', ponto.codigo),
-      supabase.from('vendas').select('id, criado_em, itens, total, forma_pagamento').eq('totem_code', ponto.codigo).gte('criado_em', desde).order('criado_em', { ascending: false }),
+      supabase.from('vendas').select('id, criado_em, itens, total, forma_pagamento, estornada_em, motivo_estorno').eq('totem_code', ponto.codigo).gte('criado_em', desde).order('criado_em', { ascending: false }),
     ])
     const r = ret.data || []
     setDados({
@@ -40,6 +40,7 @@ export default function Painel() {
       atletas: new Set(r.map((x) => x.atleta_id)).size,
       assinaturas: ass.count || 0,
       vendas: ven.data || [],
+      validas: (ven.data || []).filter((v) => !v.estornada_em),
     })
     const e = {}
     for (const row of est.data || []) e[row.suprimento] = row
@@ -83,7 +84,7 @@ export default function Painel() {
           <div className="kpis four">
             <div className="kpi"><span className="num" style={{ color: 'var(--accent-text)' }}>{dados.retiradas.length}</span><span className="tiny muted">entregas{dados.retiradas.some((x) => x.origem === 'equipe') ? ` · ${dados.retiradas.filter((x) => x.origem === 'equipe').length} da equipe` : ''}</span></div>
             <div className="kpi"><span className="num">{dados.atletas}</span><span className="tiny muted">atletas diferentes</span></div>
-            <div className="kpi"><span className="num">{brl(dados.vendas.reduce((a, v) => a + Number(v.total), 0)).replace(',00', '')}</span><span className="tiny muted">vendas avulsas</span></div>
+            <div className="kpi"><span className="num">{brl(dados.validas.reduce((a, v) => a + Number(v.total), 0)).replace(',00', '')}</span><span className="tiny muted">vendas avulsas</span></div>
             {ehAdmin
               ? <div className="kpi"><span className="num">{dados.assinaturas}</span><span className="tiny muted">assinaturas no site hoje</span></div>
               : <div className="kpi"><span className="num">{Object.values(estoque).reduce((a, e) => a + (e?.quantidade || 0), 0)}</span><span className="tiny muted">itens no estoque</span></div>}
@@ -93,13 +94,13 @@ export default function Painel() {
         <section className="card stack" style={{ gap: 10, background: '#121212', color: '#FFFFFF', border: 0 }} aria-label="Venda avulsa">
           <div className="row between" style={{ alignItems: 'baseline', gap: 8 }}>
             <strong style={{ fontSize: 17 }}>Venda avulsa</strong>
-            {dados && <span className="small" style={{ color: '#CFCFCF' }}>{dados.vendas.length ? `${brl(dados.vendas.reduce((a, v) => a + Number(v.total), 0))} hoje · ${dados.vendas.length}` : 'nenhuma hoje'}</span>}
+            {dados && <span className="small" style={{ color: '#CFCFCF' }}>{dados.validas.length ? `${brl(dados.validas.reduce((a, v) => a + Number(v.total), 0))} hoje · ${dados.validas.length}` : 'nenhuma hoje'}</span>}
           </div>
           <div className="row" style={{ gap: 8 }}>
             <Link to="/equipe/vender" className="btn btn-primary grow" style={{ textDecoration: 'none' }}><Icon name="plus" size={18} />Nova venda</Link>
             {dados?.vendas?.length > 0 && <button type="button" className="btn" style={{ background: '#2A2A2A', color: '#FFFFFF', flexShrink: 0 }} onClick={() => setVerVendas(true)}>Vendido hoje</button>}
           </div>
-          {dados?.vendas?.slice(0, 2).map((v) => (
+          {dados?.validas?.slice(0, 2).map((v) => (
             <div key={v.id} className="row between small" style={{ gap: 10, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8 }}>
               <span><strong>{(v.itens || []).map((i) => `${i.qtd} ${i.nome}`).join(' + ')}</strong><br /><span style={{ color: '#BDBDBD' }}>{NOME_FORMA[v.forma_pagamento]} · {fmtHora(v.criado_em)}</span></span>
               <strong>{brl(v.total)}</strong>
@@ -168,7 +169,7 @@ export default function Painel() {
         <Link to="/equipe/fechar" className="btn btn-ghost btn-block" style={{ marginTop: 8 }}><Icon name="check" size={18} />Fechar o dia (contagem e caixa)</Link>
         <Link to="/equipe" className="btn btn-primary btn-block btn-lg"><Icon name="scan" />Voltar a escanear</Link>
       </main>
-      {verVendas && dados && <VendidoHoje vendas={dados.vendas} onFechar={fecharVendas} />}
+      {verVendas && dados && <VendidoHoje vendas={dados.vendas} onFechar={fecharVendas} onEstornado={(t) => { toast(`Venda de ${brl(t)} estornada. Os itens voltaram ao estoque.`, 'ok'); carregar() }} />}
       {toastEl}
     </div>
   )
@@ -224,30 +225,72 @@ function ListaEntregas({ retiradas, filtro, setFiltro, pagina, setPagina }) {
 
 /** Folha "Vendido hoje": total por item, por forma de pagamento e cada venda do dia. */
 const VENDAS_POR_PAGINA = 8
-function VendidoHoje({ vendas, onFechar }) {
+const MOTIVOS = ['Registrei errado', 'Cliente desistiu', 'Pagamento não caiu']
+function VendidoHoje({ vendas, onFechar, onEstornado }) {
   const [pag, setPag] = useState(1)
+  const [estornando, setEstornando] = useState(null) // { id, motivo }
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState('')
+  const validas = vendas.filter((v) => !v.estornada_em)
   const paginas = Math.max(1, Math.ceil(vendas.length / VENDAS_POR_PAGINA))
   const visiveis = vendas.slice((pag - 1) * VENDAS_POR_PAGINA, pag * VENDAS_POR_PAGINA)
   const porItem = {}
-  for (const v of vendas) for (const i of v.itens || []) porItem[i.nome] = (porItem[i.nome] || 0) + Number(i.qtd || 0)
+  for (const v of validas) for (const i of v.itens || []) porItem[i.nome] = (porItem[i.nome] || 0) + Number(i.qtd || 0)
   const porForma = {}
-  for (const v of vendas) porForma[v.forma_pagamento] = (porForma[v.forma_pagamento] || 0) + Number(v.total || 0)
-  const total = vendas.reduce((a, v) => a + Number(v.total || 0), 0)
+  for (const v of validas) porForma[v.forma_pagamento] = (porForma[v.forma_pagamento] || 0) + Number(v.total || 0)
+  const total = validas.reduce((a, v) => a + Number(v.total || 0), 0)
+  const resumo = (v) => (v.itens || []).map((i) => `${i.qtd} ${i.nome}`).join(' + ')
+
+  async function estornar() {
+    if (!estornando || estornando.motivo.trim().length < 3 || enviando) return
+    setEnviando(true); setErro('')
+    const { data, error } = await supabase.rpc('estornar_venda', { p_venda_id: estornando.id, p_motivo: estornando.motivo.trim() })
+    setEnviando(false)
+    if (error) { setErro(mensagemErro(error)); return }
+    setEstornando(null); onEstornado(Number(data || 0))
+  }
+
   return (
     <Folha titulo="Vendido hoje" onFechar={onFechar}>
-      <div className="card stack" style={{ gap: 8 }}>
-        {Object.entries(porItem).sort((a, z) => z[1] - a[1]).map(([n, q]) => <div key={n} className="row between"><span>{n}</span><strong>{q}</strong></div>)}
-      </div>
-      <div className="card stack" style={{ gap: 8 }}>
-        {Object.entries(porForma).map(([f, v]) => <div key={f} className="row between small"><span>{NOME_FORMA[f] || f}{f === 'dinheiro' ? ' (na gaveta)' : ''}</span><span>{brl(v)}</span></div>)}
-        <div className="row between" style={{ borderTop: '1px solid var(--surface-2)', paddingTop: 8 }}><strong>Total · {vendas.length} venda{vendas.length > 1 ? 's' : ''}</strong><strong>{brl(total)}</strong></div>
-      </div>
+      {validas.length > 0 && (
+        <>
+          <div className="card stack" style={{ gap: 8 }}>
+            {Object.entries(porItem).sort((a, z) => z[1] - a[1]).map(([n, q]) => <div key={n} className="row between"><span>{n}</span><strong>{q}</strong></div>)}
+          </div>
+          <div className="card stack" style={{ gap: 8 }}>
+            {Object.entries(porForma).map(([f, v]) => <div key={f} className="row between small"><span>{NOME_FORMA[f] || f}{f === 'dinheiro' ? ' (na gaveta)' : ''}</span><span>{brl(v)}</span></div>)}
+            <div className="row between" style={{ borderTop: '1px solid var(--surface-2)', paddingTop: 8 }}><strong>Total · {validas.length} venda{validas.length > 1 ? 's' : ''}</strong><strong>{brl(total)}</strong></div>
+          </div>
+        </>
+      )}
       <span className="label-caps">Cada venda</span>
       <div className="card stack" style={{ gap: 0, padding: '4px 16px' }}>
         {visiveis.map((v, n) => (
-          <div key={v.id} className="row between small" style={{ gap: 10, padding: '10px 0', borderTop: n ? '1px solid var(--surface-2)' : 0 }}>
-            <span><strong>{(v.itens || []).map((i) => `${i.qtd} ${i.nome}`).join(' + ')}</strong><br /><span className="muted">{NOME_FORMA[v.forma_pagamento]} · {fmtHora(v.criado_em)}</span></span>
-            <strong>{brl(v.total)}</strong>
+          <div key={v.id} className="stack" style={{ gap: 8, padding: '10px 0', borderTop: n ? '1px solid var(--surface-2)' : 0 }}>
+            <div className="row between small" style={{ gap: 10, opacity: v.estornada_em ? 0.55 : 1 }}>
+              <span>
+                <strong style={{ textDecoration: v.estornada_em ? 'line-through' : 'none' }}>{resumo(v)}</strong><br />
+                <span className="muted">{NOME_FORMA[v.forma_pagamento]} · {fmtHora(v.criado_em)}{v.estornada_em ? ` · estornada (${v.motivo_estorno})` : ''}</span>
+              </span>
+              <span style={{ textAlign: 'right' }}>
+                <strong style={{ textDecoration: v.estornada_em ? 'line-through' : 'none' }}>{brl(v.total)}</strong>
+                {!v.estornada_em && estornando?.id !== v.id && <><br /><button type="button" className="btn-link" style={{ minHeight: 0, padding: 0, fontSize: 12 }} onClick={() => { setErro(''); setEstornando({ id: v.id, motivo: '' }) }}>Estornar</button></>}
+              </span>
+            </div>
+            {estornando?.id === v.id && (
+              <div className="stack" style={{ gap: 8, background: 'var(--surface-2)', borderRadius: 14, padding: 12 }}>
+                <span className="small" style={{ fontWeight: 700 }}>Estornar {resumo(v)} · {brl(v.total)}? O valor sai do caixa e os itens voltam ao estoque.</span>
+                <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+                  {MOTIVOS.map((m) => <button key={m} type="button" className="chip" style={{ minHeight: 36, padding: '6px 12px', fontSize: 13 }} aria-pressed={estornando.motivo === m} onClick={() => setEstornando((e) => ({ ...e, motivo: m }))}>{m}</button>)}
+                </div>
+                <input className="input" aria-label="Motivo do estorno" placeholder="Ou escreva o motivo" value={MOTIVOS.includes(estornando.motivo) ? '' : estornando.motivo} onChange={(e) => setEstornando((x) => ({ ...x, motivo: e.target.value }))} />
+                {erro && <div className="alert err small" role="alert">{erro}</div>}
+                <div className="row" style={{ gap: 8 }}>
+                  <button type="button" className="btn btn-ghost btn-sm grow" onClick={() => setEstornando(null)}>Voltar</button>
+                  <button type="button" className="btn btn-sm grow" style={{ background: 'var(--err)', color: '#fff' }} disabled={enviando || estornando.motivo.trim().length < 3} onClick={estornar}>{enviando ? 'Estornando…' : 'Confirmar estorno'}</button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
