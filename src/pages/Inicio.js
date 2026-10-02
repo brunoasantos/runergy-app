@@ -6,8 +6,10 @@ import { saudacao, primeiroNome, suprimento, fmtDia, fmtHora, distanciaKm, fmtKm
 import BottomNav from '../components/BottomNav'
 import InstallPrompt from '../components/InstallPrompt'
 import Icon from '../components/Icon'
+import { useDisponibilidade, estadoItem } from '../lib/disponibilidade'
 
 export default function Inicio() {
+  const disp = useDisponibilidade()
   const { perfil, ehEquipe, conta } = useAuth()
   const [pontos, setPontos] = useState(null)
   const [ultima, setUltima] = useState(null)
@@ -134,11 +136,17 @@ export default function Inicio() {
                   {[p.horario, p.km != null ? fmtKm(p.km) : `${p.cidade || ''}${p.estado ? ' · ' + p.estado : ''}`].filter(Boolean).join(' · ')}
                 </div>
                 <div className="row" style={{ gap: '4px 12px', marginTop: 6, flexWrap: 'wrap' }} aria-label="Itens disponíveis">
-                  {(p.suprimentos || []).map((s) => (
-                    <span key={s} className="row tiny" style={{ gap: 4, color: 'var(--text-2)' }}>
-                      <span style={{ color: 'var(--orange)', display: 'inline-flex' }}><Icon name={suprimento(s).icon} size={14} /></span>{suprimento(s).label}
-                    </span>
-                  ))}
+                  {(p.suprimentos || []).map((s) => {
+                    const est = estadoItem(disp[p.totem_code]?.[s])
+                    const esgotou = est === 'esgotou'
+                    return (
+                      <span key={s} className="row tiny" style={{ gap: 4, color: 'var(--text-2)', opacity: esgotou ? 0.55 : 1 }}>
+                        <span style={{ color: esgotou ? 'var(--text-2)' : 'var(--orange)', display: 'inline-flex' }}><Icon name={suprimento(s).icon} size={14} /></span>
+                        <span style={{ textDecoration: esgotou ? 'line-through' : 'none' }}>{suprimento(s).label}</span>
+                        {est && <strong style={{ color: esgotou ? 'var(--err)' : 'var(--warn)' }}>· {est}</strong>}
+                      </span>
+                    )
+                  })}
                 </div>
               </div>
             </div>

@@ -125,6 +125,7 @@ export default function Scanner() {
           <button className="btn btn-ghost grow" onClick={() => { setDigitando((d) => !d); setCurto(''); setCamEstado('iniciando') }}>
             <Icon name={digitando ? 'scan' : 'keyboard'} size={20} />{digitando ? 'Câmera' : 'Digitar'}
           </button>
+          <Link to="/equipe/vender" className="btn btn-ghost grow"><Icon name="plus" size={20} />Vender</Link>
           <Link to="/equipe/painel" className="btn btn-ghost grow"><Icon name="chart" size={20} />Painel</Link>
         </div>
       </main>

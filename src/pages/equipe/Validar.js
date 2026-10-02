@@ -69,7 +69,7 @@ export default function Validar() {
           <>
             <h2 className="h3">O que vai levar?</h2>
             <div className="supply-grid" role="group" aria-label="Escolha o item">
-              {Object.keys(SUPRIMENTOS).map((s) => (
+              {(disponiveis.length ? disponiveis : Object.keys(SUPRIMENTOS)).map((s) => (
                 <button key={s} className="supply" aria-pressed={item === s} disabled={!disponiveis.includes(s) || !cabe(s)} onClick={() => setItem(s)}>
                   <Icon name={suprimento(s).icon} size={32} />{suprimento(s).label}
                   <span className="tiny" style={{ fontWeight: 700, opacity: 0.75 }}>{rotuloCreditos(suprimento(s).peso)}</span>

@@ -22,6 +22,7 @@ import Perfil from './pages/Perfil'
 import Scanner from './pages/equipe/Scanner'
 import Validar from './pages/equipe/Validar'
 import Painel from './pages/equipe/Painel'
+import Vender from './pages/equipe/Vender'
 import { sincronizarSuprimentos } from './lib/suprimentos'
 
 // Peso (créditos) e preço avulso de cada item vêm do banco
@@ -86,6 +87,7 @@ export default function App() {
               <Route path="/equipe" element={<Protegida equipe><Scanner /></Protegida>} />
               <Route path="/equipe/validar" element={<Protegida equipe><Validar /></Protegida>} />
               <Route path="/equipe/painel" element={<Protegida equipe><Painel /></Protegida>} />
+              <Route path="/equipe/vender" element={<Protegida equipe><Vender /></Protegida>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>

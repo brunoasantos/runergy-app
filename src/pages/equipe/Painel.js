@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { usePonto } from '../../lib/ponto'
-import { inicioDoDiaSP, suprimento, fmtHora, mensagemErro, rotuloCreditos } from '../../lib/format'
+import { inicioDoDiaSP, suprimento, fmtHora, mensagemErro, rotuloCreditos, brl } from '../../lib/format'
+import { NOME_FORMA } from './Vender'
 import EquipeBand from '../../components/EquipeBand'
 import Icon from '../../components/Icon'
 import { useToast } from '../../components/Toast'
@@ -24,11 +25,12 @@ export default function Painel() {
   const carregar = useCallback(async () => {
     if (!ponto.codigo) return
     const desde = inicioDoDiaSP()
-    const [ret, abo, ass, est] = await Promise.all([
+    const [ret, abo, ass, est, ven] = await Promise.all([
       supabase.from('retiradas').select('id, suprimento, atleta_id, atleta_nome, criado_em, origem').eq('totem_code', ponto.codigo).gte('criado_em', desde).neq('origem', 'demo').order('criado_em', { ascending: false }),
       supabase.from('abordagens').select('id', { count: 'exact', head: true }).eq('totem_code', ponto.codigo).gte('criado_em', desde),
       supabase.from('assinantes').select('id', { count: 'exact', head: true }).gte('criado_em', desde),
       supabase.from('estoque_ponto').select('suprimento, quantidade, capacidade').eq('totem_code', ponto.codigo),
+      supabase.from('vendas').select('id, criado_em, itens, total, forma_pagamento').eq('totem_code', ponto.codigo).gte('criado_em', desde).order('criado_em', { ascending: false }),
     ])
     const r = ret.data || []
     setDados({
@@ -36,6 +38,7 @@ export default function Painel() {
       atletas: new Set(r.map((x) => x.atleta_id)).size,
       abordagens: abo.count || 0,
       assinaturas: ass.count || 0,
+      vendas: ven.data || [],
     })
     const e = {}
     for (const row of est.data || []) e[row.suprimento] = row
@@ -112,6 +115,21 @@ export default function Painel() {
               : <div className="kpi"><span className="num">{Object.values(estoque).reduce((a, e) => a + (e?.quantidade || 0), 0)}</span><span className="tiny muted">itens no estoque</span></div>}
           </div>
         )}
+
+        <section className="card stack" style={{ gap: 10, background: '#121212', color: '#FFFFFF', border: 0 }} aria-label="Venda avulsa">
+          <div className="row between" style={{ alignItems: 'baseline', gap: 8 }}>
+            <strong style={{ fontSize: 17 }}>Venda avulsa</strong>
+            {dados && <span className="small" style={{ color: '#CFCFCF' }}>{dados.vendas.length ? `${brl(dados.vendas.reduce((a, v) => a + Number(v.total), 0))} hoje · ${dados.vendas.length}` : 'nenhuma hoje'}</span>}
+          </div>
+          <span className="small" style={{ color: '#CFCFCF' }}>Para quem não tem plano. Escolha os itens, receba e registre. Baixa do estoque na hora.</span>
+          <Link to="/equipe/vender" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}><Icon name="plus" size={18} />Nova venda</Link>
+          {dados?.vendas?.slice(0, 3).map((v) => (
+            <div key={v.id} className="row between small" style={{ gap: 10, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8 }}>
+              <span><strong>{(v.itens || []).map((i) => `${i.qtd} ${i.nome}`).join(' + ')}</strong><br /><span style={{ color: '#BDBDBD' }}>{NOME_FORMA[v.forma_pagamento]} · {fmtHora(v.criado_em)}</span></span>
+              <strong>{brl(v.total)}</strong>
+            </div>
+          ))}
+        </section>
 
         <section className="card tight stack" style={{ gap: 12 }} aria-label="Meu consumo">
           <div className="row between" style={{ gap: 8, flexWrap: 'wrap' }}>

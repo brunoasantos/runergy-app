@@ -7,6 +7,7 @@ import { useAuth } from '../lib/auth'
 import { suprimento, distanciaKm, fmtKm, rotuloCreditos } from '../lib/format'
 import BottomNav from '../components/BottomNav'
 import Icon from '../components/Icon'
+import { useDisponibilidade, estadoItem } from '../lib/disponibilidade'
 
 const FLORIPA = [-27.5954, -48.548] // centro quando ainda não temos a localização
 const pino = (ativo) => L.divIcon({ className: '', iconSize: [34, 34], iconAnchor: [17, 17], html: `<span class="mapa-pino${ativo ? ' ativo' : ''}"></span>` })
@@ -16,6 +17,7 @@ const rota = (p) => `https://www.google.com/maps/dir/?api=1&destination=${p.lat}
 /** Mapa com os pontos Runergy e a distância a partir da localização atual. */
 export default function Pontos() {
   const { conta } = useAuth()
+  const disp = useDisponibilidade()
   const [pontos, setPontos] = useState(null)
   const [posicao, setPosicao] = useState(null)
   const [semLocal, setSemLocal] = useState(false)
@@ -98,7 +100,7 @@ export default function Pontos() {
               <a href={rota(p)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ fontWeight: 800, color: 'var(--accent-text)', textDecoration: 'none' }}>Rota</a>
             </div>
             <div className="row" style={{ gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-              {(p.suprimentos || []).map((s) => <span key={s} className="pill neutral">{suprimento(s).label} · {rotuloCreditos(suprimento(s).peso)}</span>)}
+              {(p.suprimentos || []).map((s) => { const est = estadoItem(disp[p.totem_code]?.[s]); return <span key={s} className={`pill ${est === 'esgotou' ? 'err' : 'neutral'}`} style={est === 'esgotou' ? { textDecoration: 'line-through' } : undefined}>{suprimento(s).label} · {est || rotuloCreditos(suprimento(s).peso)}</span> })}
             </div>
           </button>
         ))}

@@ -3,6 +3,7 @@ export const SUPRIMENTOS = {
   agua: { label: 'Água', detalhe: 'Copo 200 ml', icon: 'drop', peso: 1, preco: 3 },
   gel: { label: 'Carbo Gel', detalhe: 'Sachê 40 g', icon: 'bolt', peso: 3, preco: 9 },
   eletrolito: { label: 'Eletrólito', detalhe: 'Sachê 20 g', icon: 'bottle', peso: 2, preco: 6 },
+  isotonico: { label: 'Isotônico', detalhe: 'Dose 500 ml', icon: 'bottle', peso: 3, preco: 9 },
 }
 
 export function suprimento(id) {
@@ -49,6 +50,8 @@ const ERROS = {
   PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: só os planos Runner e Hero).',
   SEM_CREDITOS: 'Sem créditos neste mês. Eles renovam no dia 1º.',
   LIMITE_DIARIO: 'Limite de 10 créditos por dia da conta admin atingido. Libera amanhã.',
+  VENDA_VAZIA: 'Escolha pelo menos um item.',
+  FORMA_INVALIDA: 'Escolha a forma de pagamento.',
   CREDITOS_INSUFICIENTES: 'Créditos insuficientes para esse item. Escolha um item que custe menos.',
   SEM_ESTOQUE: 'Acabou esse item no ponto. Reponha o estoque no painel.',
 }
