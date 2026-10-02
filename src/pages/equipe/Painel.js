@@ -7,6 +7,7 @@ import { inicioDoDiaSP, suprimento, fmtHora, mensagemErro, rotuloCreditos, brl }
 import { NOME_FORMA } from './Vender'
 import EquipeBand from '../../components/EquipeBand'
 import Icon from '../../components/Icon'
+import Folha from '../../components/Folha'
 import { useToast } from '../../components/Toast'
 
 export default function Painel() {
@@ -21,6 +22,8 @@ export default function Painel() {
   const [estoque, setEstoque] = useState({})
   const [perda, setPerda] = useState(null) // { item, qtd, motivo } — baixa de item estragado/caído
   const [salvandoPerda, setSalvandoPerda] = useState(false)
+  const [verVendas, setVerVendas] = useState(false)
+  const fecharVendas = useCallback(() => setVerVendas(false), [])
 
   const carregar = useCallback(async () => {
     if (!ponto.codigo) return
@@ -66,7 +69,6 @@ export default function Painel() {
     toast(`Baixa registrada: ${qtd} ${suprimento(perda.item).label}`, 'ok'); setPerda(null); carregar()
   }
 
-  const porItem = (s) => (dados?.retiradas || []).filter((x) => x.suprimento === s).length
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh' }}>
@@ -93,14 +95,10 @@ export default function Painel() {
             <strong style={{ fontSize: 17 }}>Venda avulsa</strong>
             {dados && <span className="small" style={{ color: '#CFCFCF' }}>{dados.vendas.length ? `${brl(dados.vendas.reduce((a, v) => a + Number(v.total), 0))} hoje · ${dados.vendas.length}` : 'nenhuma hoje'}</span>}
           </div>
-          <span className="small" style={{ color: '#CFCFCF' }}>Para quem não tem plano. Escolha os itens, receba e registre. Baixa do estoque na hora.</span>
-          <Link to="/equipe/vender" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}><Icon name="plus" size={18} />Nova venda</Link>
-          {dados?.vendas?.length > 0 && (() => {
-            // Resumo do dia por item: não cresce com o número de vendas
-            const t = {}
-            for (const v of dados.vendas) for (const i of v.itens || []) t[i.nome] = (t[i.nome] || 0) + Number(i.qtd || 0)
-            return <div className="small" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8 }}><span style={{ color: '#BDBDBD' }}>Vendido hoje: </span><strong>{Object.entries(t).map(([n, q]) => `${q} ${n}`).join(' · ')}</strong></div>
-          })()}
+          <div className="row" style={{ gap: 8 }}>
+            <Link to="/equipe/vender" className="btn btn-primary grow" style={{ textDecoration: 'none' }}><Icon name="plus" size={18} />Nova venda</Link>
+            {dados?.vendas?.length > 0 && <button type="button" className="btn" style={{ background: '#2A2A2A', color: '#FFFFFF', flexShrink: 0 }} onClick={() => setVerVendas(true)}>Vendido hoje</button>}
+          </div>
           {dados?.vendas?.slice(0, 2).map((v) => (
             <div key={v.id} className="row between small" style={{ gap: 10, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8 }}>
               <span><strong>{(v.itens || []).map((i) => `${i.qtd} ${i.nome}`).join(' + ')}</strong><br /><span style={{ color: '#BDBDBD' }}>{NOME_FORMA[v.forma_pagamento]} · {fmtHora(v.criado_em)}</span></span>
@@ -155,7 +153,7 @@ export default function Painel() {
             const baixo = e && (e.quantidade <= 5 || (pct != null && pct <= 25))
             return (
               <div key={s} className="row between small" style={{ gap: 10, padding: '2px 0' }}>
-                <span style={{ fontWeight: 700 }}>{suprimento(s).label} <span className="muted" style={{ fontWeight: 500 }}>· {porItem(s)} hoje</span></span>
+                <span style={{ fontWeight: 700 }}>{suprimento(s).label}</span>
                 <span style={{ color: baixo ? 'var(--warn)' : 'var(--text)', fontWeight: 800 }}>
                   {e ? `${e.quantidade}${baixo ? ' · acabando' : ''}` : 'sem controle'}
                 </span>
@@ -170,6 +168,7 @@ export default function Painel() {
         <Link to="/equipe/fechar" className="btn btn-ghost btn-block" style={{ marginTop: 8 }}><Icon name="check" size={18} />Fechar o dia (contagem e caixa)</Link>
         <Link to="/equipe" className="btn btn-primary btn-block btn-lg"><Icon name="scan" />Voltar a escanear</Link>
       </main>
+      {verVendas && dados && <VendidoHoje vendas={dados.vendas} onFechar={fecharVendas} />}
       {toastEl}
     </div>
   )
@@ -220,5 +219,34 @@ function ListaEntregas({ retiradas, filtro, setFiltro, pagina, setPagina }) {
         </div>
       )}
     </section>
+  )
+}
+
+/** Folha "Vendido hoje": total por item, por forma de pagamento e cada venda do dia. */
+function VendidoHoje({ vendas, onFechar }) {
+  const porItem = {}
+  for (const v of vendas) for (const i of v.itens || []) porItem[i.nome] = (porItem[i.nome] || 0) + Number(i.qtd || 0)
+  const porForma = {}
+  for (const v of vendas) porForma[v.forma_pagamento] = (porForma[v.forma_pagamento] || 0) + Number(v.total || 0)
+  const total = vendas.reduce((a, v) => a + Number(v.total || 0), 0)
+  return (
+    <Folha titulo="Vendido hoje" onFechar={onFechar}>
+      <div className="card stack" style={{ gap: 8 }}>
+        {Object.entries(porItem).sort((a, z) => z[1] - a[1]).map(([n, q]) => <div key={n} className="row between"><span>{n}</span><strong>{q}</strong></div>)}
+      </div>
+      <div className="card stack" style={{ gap: 8 }}>
+        {Object.entries(porForma).map(([f, v]) => <div key={f} className="row between small"><span>{NOME_FORMA[f] || f}{f === 'dinheiro' ? ' (na gaveta)' : ''}</span><span>{brl(v)}</span></div>)}
+        <div className="row between" style={{ borderTop: '1px solid var(--surface-2)', paddingTop: 8 }}><strong>Total · {vendas.length} venda{vendas.length > 1 ? 's' : ''}</strong><strong>{brl(total)}</strong></div>
+      </div>
+      <span className="label-caps">Cada venda</span>
+      <div className="card stack" style={{ gap: 0, padding: '4px 16px' }}>
+        {vendas.map((v, n) => (
+          <div key={v.id} className="row between small" style={{ gap: 10, padding: '10px 0', borderTop: n ? '1px solid var(--surface-2)' : 0 }}>
+            <span><strong>{(v.itens || []).map((i) => `${i.qtd} ${i.nome}`).join(' + ')}</strong><br /><span className="muted">{NOME_FORMA[v.forma_pagamento]} · {fmtHora(v.criado_em)}</span></span>
+            <strong>{brl(v.total)}</strong>
+          </div>
+        ))}
+      </div>
+    </Folha>
   )
 }
