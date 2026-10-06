@@ -4,6 +4,7 @@ export const SUPRIMENTOS = {
   gel: { label: 'Carbo Gel', detalhe: 'Sachê 40 g', icon: 'bolt', peso: 3, preco: 9 },
   eletrolito: { label: 'Eletrólito', detalhe: 'Sachê 20 g', icon: 'bottle', peso: 2, preco: 6 },
   isotonico: { label: 'Isotônico', detalhe: 'Dose 500 ml', icon: 'bottle', peso: 3, preco: 9 },
+  pre_treino: { label: 'Pré-treino', detalhe: 'Sachê', icon: 'bolt', peso: 3, preco: 9 },
 }
 
 export function suprimento(id) {
@@ -47,8 +48,8 @@ const ERROS = {
   TOTEM_INVALIDO: 'Ponto não encontrado ou desativado.',
   QUANTIDADE_INVALIDA: 'Quantidade inválida.',
   SUPRIMENTO_INDISPONIVEL: 'Esse item não está disponível neste ponto.',
-  PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: só os planos Runner e Hero).',
-  SEM_CREDITOS: 'Sem créditos neste mês. Eles renovam no dia 1º.',
+  PLANO_SEM_ACESSO: 'Esta pessoa não tem acesso aos pontos (clientes: planos Starter, Runner e Hero, ou recarga válida).',
+  SEM_CREDITOS: 'Sem créditos agora. Dá para recarregar no app; os do plano renovam no dia 1º.',
   MOTIVO_OBRIGATORIO: 'Diga o motivo do estorno.',
   JA_ESTORNADA: 'Essa venda já foi estornada.',
   ESTORNO_FORA_DO_DIA: 'Só dá para estornar vendas de hoje pelo app. Peça ao supervisor no painel de gestão.',
@@ -56,8 +57,12 @@ const ERROS = {
   LIMITE_DIARIO: 'Limite de 10 créditos por dia da conta admin atingido. Libera amanhã.',
   VENDA_VAZIA: 'Escolha pelo menos um item.',
   FORMA_INVALIDA: 'Escolha a forma de pagamento.',
-  CREDITOS_INSUFICIENTES: 'Créditos insuficientes para esse item. Escolha um item que custe menos.',
+  CREDITOS_INSUFICIENTES: 'Créditos insuficientes para esse item. Escolha um item que custe menos ou recarregue no app.',
   SEM_ESTOQUE: 'Acabou esse item no ponto. Reponha o estoque no painel.',
+  SO_ASSINANTES: 'A recarga é para quem tem plano Starter, Runner ou Hero.',
+  PACOTE_INVALIDO: 'Esse pacote não está disponível. Escolha outro.',
+  MUITAS_TENTATIVAS: 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.',
+  PLANO_INDISPONIVEL: 'Esse plano não está disponível no momento.',
 }
 
 export function mensagemErro(err) {

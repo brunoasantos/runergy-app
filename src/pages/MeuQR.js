@@ -94,9 +94,9 @@ export default function MeuQR() {
         {!acesso ? (
           <section className="card stack" style={{ gap: 12, textAlign: 'center', alignItems: 'center', padding: 24 }}>
             <span className="icon-tile" style={{ width: 64, height: 64, borderRadius: 18 }}><Icon name="qr" size={32} /></span>
-            <h1 className="h2">Seu QR libera os pontos com os planos Runner e Hero</h1>
+            <h1 className="h2">Seu QR libera os pontos com os planos Starter, Runner e Hero</h1>
             <p className="small" style={{ margin: 0, color: 'var(--text-2)' }}>
-              Seu plano atual é <strong>{plano.nome || 'Grátis'}</strong>. Com o Runner você tem 10 créditos por mês e com o Hero, 30, para retirar água, carbo gel e eletrólito nos pontos Runergy.
+              Seu plano atual é <strong>{plano.nome || 'Grátis'}</strong>. Com o Starter você tem 10 créditos por mês, com o Runner 20 e com o Hero 30, para retirar água, carbo gel e eletrólito nos pontos Runergy.
             </p>
             <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Ver planos</Link>
           </section>
@@ -125,7 +125,7 @@ export default function MeuQR() {
                 <span style={{ fontSize: 20, fontWeight: 800, textAlign: 'center' }}>{perfil.nome}</span>
                 <div className="row" style={{ gap: 8, justifyContent: 'center' }}>
                   <span className="pill-dark">{conta.rotulo.toUpperCase()}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#3D3D3D' }}>{conta.ilimitado ? 'ilimitado' : `${perfil.creditos} créditos`}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#3D3D3D' }}>{conta.ilimitado ? 'ilimitado' : `${conta.creditosTotal} créditos`}</span>
                 </div>
               </div>
             </section>
@@ -138,8 +138,12 @@ export default function MeuQR() {
               <div className="bar"><span style={{ width: `${pct}%`, transition: 'width 1s linear' }} /></div>
             </div>
 
-            {!conta.ilimitado && perfil.creditos <= 0 && (
-              <div className="alert warn">Você está sem créditos neste mês. Eles renovam no dia 1º do próximo mês.</div>
+            {!conta.ilimitado && conta.creditosTotal <= 0 && (
+              <div className="alert warn">
+                {conta.podeRecarregar
+                  ? <>Você está sem créditos agora. <Link to="/recarga" style={{ fontWeight: 800 }}>Recarregue</Link> ou espere o dia 1º, quando os créditos do plano renovam.</>
+                  : 'Você está sem créditos neste mês. Eles renovam no dia 1º do próximo mês.'}
+              </div>
             )}
 
             <div className="card tight row">

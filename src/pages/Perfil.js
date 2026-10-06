@@ -11,7 +11,7 @@ import Icon from '../components/Icon'
 export default function Perfil() {
   const { perfil, ehEquipe, conta, sair, recarregarPerfil } = useAuth()
   const tema = useTema()
-  const maxCred = Math.max(conta.creditosMes || 0, perfil.creditos || 0, 1)
+  const maxCred = Math.max(conta.creditosMes || 0, conta.creditosTotal || 0, 1)
   const [editando, setEditando] = useState(false)
   const [nome, setNome] = useState(perfil.nome || '')
   const [erro, setErro] = useState('')
@@ -49,22 +49,26 @@ export default function Perfil() {
           <span className="label-caps">{conta.tipo === 'cliente' ? 'Seu plano' : 'Seu acesso'}</span>
           <div className="row" style={{ alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
             <span className="num" style={{ fontSize: 'clamp(26px, 8vw, 34px)', textTransform: 'uppercase' }}>{conta.rotulo}</span>
-            {conta.precoCliente > 0 && <span className="small" style={{ color: 'var(--text-2)' }}>{brl(conta.precoCliente)}/mês</span>}
+            {conta.precoCliente > 0 && <span className="small" style={{ color: 'var(--text-2)' }}>{brl(conta.precoCliente)}/mês{conta.kitEmCasa ? ' + frete' : ''}</span>}
           </div>
           <div className="stack" style={{ gap: 8 }}>
-            <div className="row between small"><span style={{ color: 'var(--text-2)' }}>Créditos disponíveis</span><strong>{conta.ilimitado ? 'Ilimitado' : `${perfil.creditos}${conta.creditosMes && perfil.creditos <= conta.creditosMes ? ` de ${conta.creditosMes}` : ''}`}</strong></div>
-            <div className="bar"><span style={{ width: conta.ilimitado ? '100%' : `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} /></div>
-            <span className="tiny muted">{conta.acessoQR ? `Acesso a todos os pontos Runergy.${conta.creditosMes ? (perfil.tipo === 'cliente' && perfil.plano === 'hero' ? ` Todo dia 1º entram ${conta.creditosMes} e o que sobrar (até 30) continua com você.` : ` Renova para ${conta.creditosMes} no dia 1º de cada mês.`) : ''}` : 'Sem acesso aos pontos — disponível nos planos Runner e Hero.'}</span>
+            <div className="row between small"><span style={{ color: 'var(--text-2)' }}>Créditos disponíveis</span><strong>{conta.ilimitado ? 'Ilimitado' : `${conta.creditosTotal}${!conta.saldoRecarga && conta.creditosMes && perfil.creditos <= conta.creditosMes ? ` de ${conta.creditosMes}` : ''}`}</strong></div>
+            <div className="bar"><span style={{ width: conta.ilimitado ? '100%' : `${Math.min(100, Math.round((conta.creditosTotal / maxCred) * 100))}%` }} /></div>
+            {conta.saldoRecarga > 0 && <div className="row between small"><span style={{ color: 'var(--text-2)' }}>Recarga{conta.recargaVenceEm ? ` · vale até ${fmtData(conta.recargaVenceEm)}` : ''}</span><strong>{conta.saldoRecarga}</strong></div>}
+            <span className="tiny muted">{conta.kitEmCasa ? 'Kit em casa todo mês. O acesso aos pontos vem nos planos Starter, Runner e Hero.' : conta.acessoQR ? `Acesso a todos os pontos Runergy.${conta.creditosMes ? (perfil.tipo === 'cliente' && perfil.plano === 'hero' ? ` Todo dia 1º entram ${conta.creditosMes} e o que sobrar (até 30) continua com você.` : ` Renova para ${conta.creditosMes} no dia 1º de cada mês.`) : ''}` : 'Sem acesso aos pontos: disponível nos planos Starter, Runner e Hero.'}</span>
           </div>
           {ass && ass.status === 'ativo' && ass.plano_agendado && <div className="alert warn small">Muda para <strong>{ass.plano_agendado.charAt(0).toUpperCase() + ass.plano_agendado.slice(1)}</strong> em {fmtData(ass.troca_em)}. Para desfazer, abra Ver planos.</div>}
           {cancelada && <div className="alert warn small">Assinatura cancelada. Seus benefícios continuam até <strong>{fmtData(ass.acesso_ate)}</strong>; depois a conta vira Free.</div>}
+          {conta.podeRecarregar && (
+            <Link to="/recarga" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Recarregar créditos</Link>
+          )}
           {conta.tipo === 'cliente' && (
             <Link to="/planos" className="btn btn-ghost btn-block" style={{ textDecoration: 'none' }}>
               {cancelada ? 'Assinar de novo' : 'Ver planos'}
             </Link>
           )}
-          {conta.tipo === 'cliente' && ['starter', 'runner', 'hero'].includes(perfil.plano) && (
-            <Link to="/kit" className="btn btn-ghost btn-block" style={{ textDecoration: 'none' }}>Meu kit</Link>
+          {conta.tipo === 'cliente' && (conta.kitEmCasa || ['runner', 'hero'].includes(perfil.plano)) && (
+            <Link to="/kit" className="btn btn-ghost btn-block" style={{ textDecoration: 'none' }}>{conta.kitEmCasa ? 'Meu kit' : 'Meus brindes'}</Link>
           )}
           {ass && ass.status === 'ativo' && ass.pelo_mp && (
             <Link to="/assinatura/cancelar" className="small" style={{ textAlign: 'center', color: 'var(--text-2)', fontWeight: 600 }}>Cancelar assinatura</Link>

@@ -6,23 +6,43 @@ import { UFS, mascaraTel, mascaraCep, buscarCep } from '../lib/cadastro'
 import BottomNav from '../components/BottomNav'
 import PageHeader from '../components/PageHeader'
 
-// Mesmos planos e benefícios do site (runergy-site/src/lib/planos.js)
-const PLANOS = [
-  { id: 'starter', nome: 'Starter', preco: 59.9, resumo: 'Kit em casa todo mês', itens: ['6 sachês de carbo gel', '2 isotônicos', '2 pré-treinos em pó', 'Entrega mensal na sua porta'] },
-  { id: 'runner', nome: 'Runner', preco: 89.9, resumo: 'Kit em casa + 10 créditos para experimentar os pontos', qr: true, itens: ['Tudo do plano Starter', 'QR nos pontos: 10 créditos por mês', 'Camiseta, boné e meia Runergy (enviados uma vez, a partir da 2ª mensalidade)', 'Frete grátis'] },
-  { id: 'hero', nome: 'Hero', preco: 129.9, resumo: 'R$ 90 em produtos nos pontos todo mês · o que sobra acumula', qr: true, selo: 'Mais vantajoso', itens: ['Tudo do plano Runner', 'QR nos pontos: 30 créditos por mês', 'Créditos que sobram passam para o mês seguinte (até 30)', 'Óculos Baixa Pace (enviado uma vez, a partir da 2ª mensalidade)', 'Suporte VIP', 'Frete grátis'] },
+// Mesmos planos e benefícios do site (runergy-site/src/lib/planos.js). Preço e "ativo" vêm do banco (tabela planos).
+const PLANOS_BASE = [
+  { id: 'starter', nome: 'Starter', preco: 29.9, creditos: 10, resumo: 'Para quem está começando a correr', qr: true, itens: ['10 créditos por mês nos pontos Runergy', 'QR no app: mostre e pegue sem parar', 'Recarga de créditos quando precisar'] },
+  { id: 'runner', nome: 'Runner', preco: 49.9, creditos: 20, resumo: 'Para quem corre toda semana', qr: true, itens: ['20 créditos por mês nos pontos Runergy', 'Boné Runergy de brinde (a partir da 2ª mensalidade)', 'Recarga de créditos quando precisar'] },
+  { id: 'hero', nome: 'Hero', preco: 69.9, creditos: 30, resumo: 'R$ 90 em produtos nos pontos todo mês · o que sobra acumula', qr: true, selo: 'Mais vantajoso', itens: ['30 créditos por mês nos pontos Runergy', 'Créditos que sobram passam para o mês seguinte (até 30)', 'Boné e camiseta Runergy de brinde (a partir da 2ª mensalidade)', 'Recarga de créditos quando precisar'] },
+  { id: 'kit', nome: 'Kit em casa', preco: 99.9, frete: 50, kit: true, ativo: false, resumo: 'Para quem mora longe dos pontos: o kit chega em casa', itens: ['6 carbo gel, 2 isotônicos e 2 pré-treinos', 'Entrega mensal na sua porta', 'Sem créditos nos pontos'] },
 ]
+const COM_CREDITO = ['starter', 'runner', 'hero']
 
-/** Assinar pelo app: escolhe o plano, confere o endereço do kit e segue para o pagamento no Mercado Pago. */
+/** Planos com preço e situação (ativo) do banco; o Kit em casa só aparece quando o admin liga no painel. */
+function usePlanos() {
+  const [lista, setLista] = useState(PLANOS_BASE.filter((p) => !p.kit))
+  useEffect(() => {
+    supabase.from('planos').select('id, preco, frete, ativo, creditos_mes').in('id', PLANOS_BASE.map((p) => p.id)).then(({ data }) => {
+      if (!data) return
+      const m = Object.fromEntries(data.map((r) => [r.id, r]))
+      setLista(PLANOS_BASE.map((p) => (m[p.id] ? { ...p, preco: Number(m[p.id].preco), frete: Number(m[p.id].frete || 0), ativo: m[p.id].ativo !== false, creditos: m[p.id].creditos_mes ?? p.creditos } : p))
+        .filter((p) => !p.kit || p.ativo))
+    })
+  }, [])
+  return lista
+}
+
+/** Assinar pelo app: escolhe o plano e segue para o pagamento no Mercado Pago (só o Kit em casa pede endereço). */
 export default function Planos() {
   const { perfil, conta, recarregarPerfil } = useAuth()
+  const PLANOS = usePlanos()
   const atual = conta.tipo === 'cliente' ? perfil.plano : null
-  const [escolha, setEscolha] = useState(['starter', 'runner', 'hero'].includes(atual) ? atual : 'hero')
+  const [escolha, setEscolha] = useState([...COM_CREDITO, 'kit'].includes(atual) ? atual : 'hero')
   // Quem já assina pelo Mercado Pago troca de plano na mesma assinatura (sem segunda cobrança)
   const [ass, setAss] = useState(undefined)
   const carregarAss = () => supabase.rpc('minha_assinatura_v2').then(({ data }) => setAss((data || [])[0] || null))
   useEffect(() => { carregarAss() }, []) // eslint-disable-line
-  const modoTroca = !!(ass && ass.status === 'ativo' && ass.pelo_mp)
+  const assinaAtivo = !!(ass && ass.status === 'ativo' && ass.pelo_mp)
+  // Troca na mesma assinatura só entre os planos com créditos; Kit em casa ↔ créditos = cancelar e assinar de novo
+  const modoTroca = assinaAtivo && COM_CREDITO.includes(ass.plano) && COM_CREDITO.includes(escolha)
+  const trocaEntreTipos = assinaAtivo && !modoTroca && escolha !== ass.plano
   const [f, setF] = useState({ telefone: '', cep: '', cidade: '', estado: '', endereco: '', numero: '', complemento: '' })
   const [carregado, setCarregado] = useState(false)
   const [buscando, setBuscando] = useState(false)
@@ -34,7 +54,8 @@ export default function Planos() {
   const [emailMp, setEmailMp] = useState('')
   const emailMpOk = !outroMp || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailMp.trim())
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }))
-  const plano = PLANOS.find((p) => p.id === escolha)
+  const plano = PLANOS.find((p) => p.id === escolha) || PLANOS.find((p) => p.id === 'hero')
+  const comEntrega = !!plano?.kit
 
   useEffect(() => {
     supabase.from('contatos').select('telefone, cep, cidade, estado, endereco, numero, complemento').maybeSingle()
@@ -59,36 +80,39 @@ export default function Planos() {
     const m = mascaraCep(v); set('cep', m)
     if (m.replace(/\D/g, '').length === 8) completarPeloCep(m)
   }
-  // Cadastro antigo com CEP mas sem endereço: completa sozinho ao abrir
+  // Cadastro antigo com CEP mas sem endereço: completa sozinho ao abrir (só importa para o Kit em casa)
   useEffect(() => {
-    if (carregado && f.cep.replace(/\D/g, '').length === 8 && (!f.endereco || !f.cidade)) completarPeloCep(f.cep, false)
-    // só ao terminar de carregar o cadastro
-  }, [carregado]) // eslint-disable-line
+    if (carregado && comEntrega && f.cep.replace(/\D/g, '').length === 8 && (!f.endereco || !f.cidade)) completarPeloCep(f.cep, false)
+  }, [carregado, comEntrega]) // eslint-disable-line
 
-  const completo = f.telefone.replace(/\D/g, '').length >= 10 && f.cep.replace(/\D/g, '').length === 8 && f.cidade.trim() && f.estado && f.endereco.trim() && f.numero.trim()
+  const telOk = f.telefone.replace(/\D/g, '').length >= 10
+  const enderecoOk = f.cep.replace(/\D/g, '').length === 8 && f.cidade.trim() && f.estado && f.endereco.trim() && f.numero.trim()
+  const completo = telOk && (!comEntrega || enderecoOk)
 
   async function assinar(e) {
     e.preventDefault()
     if (!completo || !emailMpOk || enviando || escolha === atual) return
     setEnviando(true); setErro('')
-    const dados = { nome: perfil.nome, ...f }
+    const dados = comEntrega ? { nome: perfil.nome, ...f } : { nome: perfil.nome, telefone: f.telefone }
     const r1 = await supabase.rpc('salvar_meu_cadastro', { p: dados })
     if (r1.error) { setErro(mensagemErro(r1.error)); setEnviando(false); return }
     // Cria a assinatura no Mercado Pago (Edge Function mp-checkout) e abre o link de pagamento
     const { data, error } = await supabase.functions.invoke('mp-checkout', { body: {
-      plano: plano.id, email: perfil.email, nome: perfil.nome, telefone: f.telefone, cep: f.cep, cidade: f.cidade.trim(), estado: f.estado,
-      endereco: f.endereco.trim(), numero: f.numero.trim(), complemento: f.complemento.trim(), origem: 'app',
+      plano: plano.id, email: perfil.email, nome: perfil.nome, telefone: f.telefone, origem: 'app',
+      ...(comEntrega ? { cep: f.cep, cidade: f.cidade.trim(), estado: f.estado, endereco: f.endereco.trim(), numero: f.numero.trim(), complemento: f.complemento.trim() } : {}),
       email_mp: outroMp ? emailMp.trim().toLowerCase() : undefined,
     } })
     if (error || !data?.link) { setErro('Não foi possível abrir o pagamento agora. Tente de novo em instantes.'); setEnviando(false); return }
     window.location.href = data.link
   }
 
+  const precoTexto = (p) => (p.kit ? <>{brl(p.preco)}<span className="tiny" style={{ fontWeight: 600 }}>/mês + frete</span></> : <>{brl(p.preco)}<span className="tiny" style={{ fontWeight: 600 }}>/mês</span></>)
+
   return (
     <>
       <main className="screen has-nav" style={{ gap: 14 }}>
         <PageHeader titulo="Escolha seu plano" voltar={-1} />
-        {conta.tipo !== 'cliente' && <div className="alert ok small">Você já tem QR nos pontos como <strong>{conta.rotulo}</strong>. Os planos abaixo são para receber o kit em casa.</div>}
+        {conta.tipo !== 'cliente' && <div className="alert ok small">Você já tem QR nos pontos como <strong>{conta.rotulo}</strong>.</div>}
 
         <div className="stack" role="radiogroup" aria-label="Planos" style={{ gap: 10 }}>
           {PLANOS.map((p) => {
@@ -96,8 +120,8 @@ export default function Planos() {
             return (
               <button key={p.id} type="button" role="radio" aria-checked={on} className={`card tight plano-op${on ? ' sel' : ''}`} onClick={() => setEscolha(p.id)}>
                 <div className="row between" style={{ alignItems: 'baseline', gap: 8 }}>
-                  <strong style={{ fontSize: 17 }}>{p.nome}{p.qr && <span className="pill brand" style={{ marginLeft: 8 }}>QR nos pontos</span>}{p.selo && <span className="pill neutral" style={{ marginLeft: 6 }}>{p.selo}</span>}</strong>
-                  <strong style={{ whiteSpace: 'nowrap' }}>{brl(p.preco)}<span className="tiny" style={{ fontWeight: 600 }}>/mês</span></strong>
+                  <strong style={{ fontSize: 17 }}>{p.nome}{p.qr && <span className="pill brand" style={{ marginLeft: 8 }}>{p.creditos} créditos</span>}{p.selo && <span className="pill neutral" style={{ marginLeft: 6 }}>{p.selo}</span>}</strong>
+                  <strong style={{ whiteSpace: 'nowrap' }}>{precoTexto(p)}</strong>
                 </div>
                 <span className="small" style={{ color: 'var(--text-2)' }}>{atual === p.id ? 'Seu plano atual' : modoTroca && ass.plano_agendado === p.id ? `Muda para este plano em ${fmtData(ass.troca_em)}` : p.resumo}</span>
                 {on && <ul className="small" style={{ margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.7, color: 'var(--text-2)' }}>{p.itens.map((i) => <li key={i}>{i}</li>)}</ul>}
@@ -108,13 +132,20 @@ export default function Planos() {
 
         {ass === undefined && <div className="skeleton" style={{ height: 120 }} />}
         {modoTroca && <TrocaPlano ass={ass} escolha={escolha} plano={plano} atual={ass.plano} aoTrocar={async () => { await carregarAss(); await recarregarPerfil?.() }} />}
-        {ass !== undefined && !modoTroca && <form className="card stack" style={{ gap: 12 }} onSubmit={assinar} noValidate>
+        {trocaEntreTipos && (
+          <section className="card stack" style={{ gap: 8 }}>
+            <strong>Trocar entre Kit em casa e plano com créditos</strong>
+            <span className="small" style={{ color: 'var(--text-2)' }}>São assinaturas diferentes. Cancele a atual em Perfil (os benefícios continuam até o fim do mês pago) e depois assine o novo plano aqui.</span>
+          </section>
+        )}
+        {ass !== undefined && !assinaAtivo && <form className="card stack" style={{ gap: 12 }} onSubmit={assinar} noValidate>
           <div className="stack" style={{ gap: 2 }}>
-            <strong>Entrega do kit</strong>
-            <span className="small" style={{ color: 'var(--text-2)' }}>{carregado && completo ? 'Confira o endereço. Ele fica salvo no seu cadastro.' : 'Preencha uma vez e ele fica salvo no seu cadastro.'}</span>
+            <strong>{comEntrega ? 'Entrega do kit' : 'Seus dados'}</strong>
+            <span className="small" style={{ color: 'var(--text-2)' }}>{comEntrega ? (carregado && enderecoOk ? 'Confira o endereço. Ele fica salvo no seu cadastro.' : 'Preencha uma vez e ele fica salvo no seu cadastro.') : 'Seu WhatsApp fica salvo no cadastro para a equipe falar com você.'}</span>
           </div>
           <div className="field"><label htmlFor="pl-tel">WhatsApp</label>
             <input id="pl-tel" className="input" type="tel" inputMode="tel" autoComplete="tel" placeholder="(00) 00000-0000" value={f.telefone} onChange={(e) => set('telefone', mascaraTel(e.target.value))} /></div>
+          {comEntrega && <>
           <div className="form-duas">
             <div className="field"><label htmlFor="pl-cep">CEP{buscando ? ' · buscando…' : ''}</label>
               <input id="pl-cep" className="input" inputMode="numeric" autoComplete="postal-code" placeholder="00000-000" value={f.cep} onChange={(e) => cep(e.target.value)} /></div>
@@ -134,6 +165,14 @@ export default function Planos() {
             <div className="field"><label htmlFor="pl-comp">Complemento</label>
               <input id="pl-comp" className="input" autoComplete="address-line2" placeholder="Apto, bloco…" value={f.complemento} onChange={(e) => set('complemento', e.target.value)} /></div>
           </div>
+          <div className="row between" style={{ background: 'var(--surface-2)', borderRadius: 14, padding: '10px 14px', gap: 10 }}>
+            <span className="stack" style={{ gap: 0 }}>
+              <strong className="small">Total por mês</strong>
+              <span className="tiny" style={{ color: 'var(--text-2)' }}>kit {brl(plano.preco)} + frete {brl(plano.frete)}</span>
+            </span>
+            <strong style={{ whiteSpace: 'nowrap' }}>{brl(Number(plano.preco) + Number(plano.frete || 0))}</strong>
+          </div>
+          </>}
           <label className="row small" style={{ gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
             <input type="checkbox" checked={outroMp} onChange={(e) => setOutroMp(e.target.checked)} style={{ marginTop: 3 }} />
             <span>Uso <strong>outro e-mail</strong> na minha conta do Mercado Pago <span className="muted">(o Mercado Pago só aceita pagar logado com o mesmo e-mail)</span></span>

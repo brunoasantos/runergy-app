@@ -12,7 +12,7 @@ import { useDisponibilidade, estadoItem } from '../lib/disponibilidade'
 export default function Inicio() {
   const disp = useDisponibilidade()
   const { perfil, ehEquipe, conta } = useAuth()
-  const pago = conta.tipo === 'cliente' && ['starter', 'runner', 'hero'].includes(perfil.plano)
+  const pago = conta.tipo === 'cliente' && ['starter', 'runner', 'hero', 'kit'].includes(perfil.plano)
   const envios = useMeusEnvios()
   const kit = envios?.[0]
   const chaveBV = `rg_boasvindas_${perfil.id}_${perfil.plano}`
@@ -24,7 +24,10 @@ export default function Inicio() {
   const [posicao, setPosicao] = useState(null)
 
   const acesso = conta.acessoQR
-  const maxCred = Math.max(conta.creditosMes || 0, perfil.creditos || 0, 1)
+  const total = conta.creditosTotal
+  const maxCred = Math.max(conta.creditosMes || 0, total || 0, 1)
+  // Avisa quando está acabando (3 créditos ou menos = no máximo uma água, um eletrólito ou um gel)
+  const acabando = conta.podeRecarregar && !conta.ilimitado && total <= 3
 
   useEffect(() => {
     supabase.from('totens').select('totem_code, nome, cidade, estado, lat, lng, suprimentos, horario')
@@ -70,24 +73,48 @@ export default function Inicio() {
             <span className="pill brand">{conta.rotulo.toUpperCase()}</span>
           </div>
           <div className="row" style={{ alignItems: 'baseline', gap: 8, marginTop: 14 }}>
-            <span className="num" style={{ fontSize: 'clamp(52px, 17vw, 68px)' }}>{conta.ilimitado ? '∞' : perfil.creditos}</span>
-            <span className="small" style={{ color: 'var(--text-2)' }}>{conta.ilimitado ? 'créditos ilimitados' : !conta.creditosMes ? 'créditos' : perfil.creditos > conta.creditosMes ? `créditos · ${conta.creditosMes} por mês` : `de ${conta.creditosMes} créditos no mês`}</span>
+            <span className="num" style={{ fontSize: 'clamp(52px, 17vw, 68px)' }}>{conta.ilimitado ? '∞' : total}</span>
+            <span className="small" style={{ color: 'var(--text-2)' }}>{conta.ilimitado ? 'créditos ilimitados' : conta.saldoRecarga > 0 ? 'créditos' : !conta.creditosMes ? 'créditos' : total > conta.creditosMes ? `créditos · ${conta.creditosMes} por mês` : `de ${conta.creditosMes} créditos no mês`}</span>
           </div>
           <div className="bar" style={{ marginTop: 14, maxWidth: 'calc(100% - 70px)' }}>
-            <span style={{ width: conta.ilimitado ? '100%' : `${Math.min(100, Math.round((perfil.creditos / maxCred) * 100))}%` }} />
+            <span style={{ width: conta.ilimitado ? '100%' : `${Math.min(100, Math.round((total / maxCred) * 100))}%` }} />
           </div>
+          {conta.saldoRecarga > 0 && (
+            <span className="small" style={{ display: 'block', marginTop: 10, color: 'var(--text-2)', maxWidth: 'calc(100% - 60px)' }}>
+              {conta.creditosPlano} do plano · <strong style={{ color: 'var(--text)' }}>{conta.saldoRecarga} da recarga</strong>
+            </span>
+          )}
+          {conta.podeRecarregar && (
+            <Link to="/recarga" className="row" style={{ marginTop: 12, gap: 6, fontSize: 14, fontWeight: 800, color: 'var(--accent-text)', textDecoration: 'none', width: 'fit-content' }}>
+              <Icon name="plus" size={16} />Recarregar créditos
+            </Link>
+          )}
         </section>
+
+        {acabando && (
+          <Link to="/recarga" className="card tight row" style={{ textDecoration: 'none', color: 'var(--text)', border: '1.5px solid var(--orange)' }}>
+            <span className="icon-tile" style={{ background: 'var(--orange)', color: 'var(--on-orange)' }}><Icon name="bolt" /></span>
+            <span className="grow">
+              <span style={{ display: 'block', fontWeight: 800 }}>{total === 0 ? 'Seus créditos acabaram' : `Restam ${total} ${total === 1 ? 'crédito' : 'créditos'}`}</span>
+              <span className="small" style={{ color: 'var(--text-2)' }}>Recarregue e siga treinando: 5 créditos por R$ 12,50.</span>
+            </span>
+            <Icon name="chevron" size={18} />
+          </Link>
+        )}
 
         {pago && !bvVisto && (
           <section className="card stack" style={{ gap: 10, background: '#121212', color: '#FFFFFF', border: 0 }} aria-label="Boas-vindas">
             <span style={{ fontSize: 'clamp(22px, 6.5vw, 26px)', fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', lineHeight: 1.1 }}>Boas-vindas ao {conta.planoCliente}!</span>
             <span className="small" style={{ color: '#D6D6D6', lineHeight: 1.5 }}>
-              Seu kit {kit ? `de ${fmtMes(kit.competencia + 'T12:00:00')} ` : ''}já está sendo preparado e chega nos próximos dias. Quando for postado, o rastreio aparece em Meu kit.
-              {acesso ? ` Seu QR também está liberado: ${conta.creditosMes} créditos por mês nos pontos Runergy.` : ''}
+              {conta.kitEmCasa
+                ? `Seu kit ${kit ? `de ${fmtMes(kit.competencia + 'T12:00:00')} ` : ''}já está sendo preparado e chega nos próximos dias. Quando for postado, o rastreio aparece em Meu kit.`
+                : `Seu QR está liberado: ${conta.creditosMes} créditos por mês para retirar água, gel e eletrólito nos pontos Runergy.`}
             </span>
             <div className="row" style={{ gap: 10 }}>
               <button type="button" className="btn btn-ghost grow" style={{ color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.3)' }} onClick={fecharBV}>Ok</button>
-              <Link to="/kit" onClick={fecharBV} className="btn btn-primary grow" style={{ textDecoration: 'none' }}>Ver meu kit</Link>
+              {conta.kitEmCasa
+                ? <Link to="/kit" onClick={fecharBV} className="btn btn-primary grow" style={{ textDecoration: 'none' }}>Ver meu kit</Link>
+                : <Link to="/qr" onClick={fecharBV} className="btn btn-primary grow" style={{ textDecoration: 'none' }}>Ver meu QR</Link>}
             </div>
           </section>
         )}
@@ -96,7 +123,7 @@ export default function Inicio() {
           <Link to="/kit" className="card tight row" style={{ textDecoration: 'none', color: 'var(--text)' }}>
             <span className="icon-tile"><Icon name="bottle" /></span>
             <span className="grow">
-              <span className="tiny muted" style={{ display: 'block', textTransform: 'capitalize' }}>Kit de {fmtMes(kit.competencia + 'T12:00:00')}</span>
+              <span className="tiny muted" style={{ display: 'block' }}>{kit.tipo === 'brinde' ? 'Seu brinde Runergy' : `Kit de ${fmtMes(kit.competencia + 'T12:00:00')}`}</span>
               <span style={{ fontWeight: 800 }}>{ETAPA[kit.status]}</span>
             </span>
             <Icon name="chevron" size={18} />
@@ -117,7 +144,7 @@ export default function Inicio() {
           <section className="card accent stack" style={{ gap: 12 }}>
             <span className="h3">Retire água e gel na sua rota</span>
             <p className="small" style={{ margin: 0, color: 'var(--text-2)' }}>
-              O acesso aos pontos Runergy vem nos planos Runner (10 créditos por mês) e Hero (30 créditos por mês) para água, carbo gel e eletrólito.
+              O acesso aos pontos Runergy vem nos planos Starter (10 créditos por mês), Runner (20) e Hero (30) para água, carbo gel e eletrólito.
             </p>
             <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Ver planos</Link>
           </section>
