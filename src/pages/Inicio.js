@@ -7,6 +7,7 @@ import { useMeusEnvios } from './MeuKit'
 import BottomNav from '../components/BottomNav'
 import InstallPrompt from '../components/InstallPrompt'
 import Icon from '../components/Icon'
+import Avatar from '../components/Avatar'
 import { useDisponibilidade, estadoItem } from '../lib/disponibilidade'
 
 // Links do cabeçalho "Pontos Runergy": mesma altura e alinhamento (botão e link)
@@ -62,8 +63,8 @@ export default function Inicio() {
             <span className="small muted">{saudacao()},</span>
             <span className="h2">{primeiroNome(perfil.nome)}</span>
           </div>
-          <Link to="/perfil" aria-label="Perfil" className="icon-btn" style={{ borderRadius: 999, fontWeight: 800, textDecoration: 'none', color: 'var(--text)', background: 'var(--surface-2)' }}>
-            {primeiroNome(perfil.nome).charAt(0).toUpperCase()}
+          <Link to="/perfil" aria-label="Perfil" style={{ borderRadius: 999, textDecoration: 'none', display: 'inline-flex' }}>
+            <Avatar nome={primeiroNome(perfil.nome)} path={perfil.foto_path} size={44} fontSize={18} />
           </Link>
         </div>
 

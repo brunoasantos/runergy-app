@@ -3,19 +3,21 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useTema } from '../lib/temaCtx'
-import { brl, fmtData, mensagemErro } from '../lib/format'
+import { brl, fmtData } from '../lib/format'
 import BottomNav from '../components/BottomNav'
 import ThemeSwitch from '../components/ThemeSwitch'
 import Icon from '../components/Icon'
+import Avatar from '../components/Avatar'
+import MeusDados from '../components/MeusDados'
+import { useToast } from '../components/Toast'
 import { TERMOS_URL } from '../lib/termos'
 
 export default function Perfil() {
-  const { perfil, ehEquipe, conta, sair, recarregarPerfil } = useAuth()
+  const { perfil, ehEquipe, conta, sair } = useAuth()
   const tema = useTema()
   const maxCred = Math.max(conta.creditosMes || 0, conta.creditosTotal || 0, 1)
   const [editando, setEditando] = useState(false)
-  const [nome, setNome] = useState(perfil.nome || '')
-  const [erro, setErro] = useState('')
+  const [toastEl, toast] = useToast()
   const [ass, setAss] = useState(null)
   useEffect(() => {
     if (conta.tipo !== 'cliente') return
@@ -23,22 +25,14 @@ export default function Perfil() {
   }, [conta.tipo, perfil.plano])
   const cancelada = ass && ass.status === 'cancelado' && ass.acesso_ate && new Date(ass.acesso_ate) > new Date()
 
-  async function salvarNome(e) {
-    e.preventDefault()
-    const n = nome.trim().replace(/\s+/g, ' ')
-    if (n.length < 2) return
-    const { error } = await supabase.from('perfis').update({ nome: n }).eq('id', perfil.id)
-    if (error) { setErro(mensagemErro(error)); return }
-    await recarregarPerfil(); setEditando(false); setErro('')
-  }
 
   return (
     <>
       <main className="screen has-nav">
         <div className="row" style={{ gap: 14 }}>
-          <div style={{ width: 60, height: 60, borderRadius: 999, background: 'var(--orange)', color: 'var(--on-orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 900, flexShrink: 0 }}>
-            {(perfil.nome || 'R').charAt(0).toUpperCase()}
-          </div>
+          <button type="button" aria-label="Abrir meus dados" onClick={() => setEditando(true)} style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', borderRadius: 999 }}>
+            <Avatar nome={perfil.nome} path={perfil.foto_path} size={60} fontSize={24} />
+          </button>
           <div className="grow">
             <div className="h2 ellipsis">{perfil.nome}</div>
             <div className="small muted ellipsis">{perfil.email}</div>
@@ -86,23 +80,9 @@ export default function Perfil() {
         </section>
 
         <section aria-label="Conta">
-          {editando ? (
-            <form className="stack" style={{ gap: 10, padding: '8px 0' }} onSubmit={salvarNome}>
-              <div className="field">
-                <label htmlFor="p-nome">Seu nome</label>
-                <input id="p-nome" className="input" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={60} autoComplete="name" />
-              </div>
-              {erro && <div className="alert err">{erro}</div>}
-              <div className="row" style={{ gap: 10 }}>
-                <button type="button" className="btn btn-ghost grow" onClick={() => { setEditando(false); setNome(perfil.nome || '') }}>Cancelar</button>
-                <button className="btn btn-primary grow">Salvar</button>
-              </div>
-            </form>
-          ) : (
-            <button className="list-link" onClick={() => setEditando(true)}>
-              <span style={{ color: 'var(--orange)' }}><Icon name="user" size={20} /></span><span className="grow">Editar nome</span><Icon name="chevron" size={18} />
-            </button>
-          )}
+          <button className="list-link" onClick={() => setEditando(true)}>
+            <span style={{ color: 'var(--orange)' }}><Icon name="user" size={20} /></span><span className="grow">Meus dados</span><Icon name="chevron" size={18} />
+          </button>
           <Link className="list-link" to="/nova-senha" style={{ textDecoration: 'none' }}>
             <span style={{ color: 'var(--orange)' }}><Icon name="keyboard" size={20} /></span><span className="grow">Alterar senha</span><Icon name="chevron" size={18} />
           </Link>
@@ -122,6 +102,8 @@ export default function Perfil() {
         </button>
         <p className="tiny muted" style={{ textAlign: 'center', margin: 0 }}>Runergy v2.0 · KEEP YOUR PACE.</p>
       </main>
+      {editando && <MeusDados onFechar={() => setEditando(false)} onSalvo={() => toast('Dados salvos.', 'ok')} />}
+      {toastEl}
       <BottomNav />
     </>
   )

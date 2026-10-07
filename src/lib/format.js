@@ -64,11 +64,17 @@ const ERROS = {
   PACOTE_INVALIDO: 'Esse pacote não está disponível. Escolha outro.',
   MUITAS_TENTATIVAS: 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.',
   PLANO_INDISPONIVEL: 'Esse plano não está disponível no momento.',
+  FOTO_INVALIDA: 'Não foi possível salvar essa foto. Tente outra.',
+  FOTO_NAO_ENVIADA: 'A foto não chegou. Tente de novo.',
+  UF_INVALIDA: 'Escolha um estado válido.',
+  CEP_INVALIDO: 'O CEP tem 8 números.',
 }
 
 export function mensagemErro(err) {
   const msg = (err && (err.message || err.error_description || String(err))) || ''
   for (const k of Object.keys(ERROS)) if (msg.includes(k)) return ERROS[k]
+  if (/exceeded the maximum allowed size|too large|payload too large/i.test(msg)) return 'A foto ficou grande demais. Tente outra.'
+  if (/mime type|not supported/i.test(msg)) return 'Use uma foto JPG, PNG ou HEIC.'
   if (/rate limit|too many/i.test(msg)) return 'Muitas tentativas. Espere alguns minutos e tente de novo.'
   if (/expired|invalid.*(otp|token)|token.*(expired|invalid)/i.test(msg)) return 'Código inválido ou expirado. Confira o e-mail ou peça outro.'
   if (/Invalid login credentials/i.test(msg)) return 'E-mail ou senha incorretos.'

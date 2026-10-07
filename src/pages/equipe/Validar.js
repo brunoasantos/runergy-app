@@ -5,6 +5,7 @@ import { usePonto } from '../../lib/ponto'
 import { mensagemErro, suprimento, SUPRIMENTOS, rotuloCreditos } from '../../lib/format'
 import EquipeBand from '../../components/EquipeBand'
 import Icon from '../../components/Icon'
+import Avatar from '../../components/Avatar'
 
 // Até 6 unidades por leitura do QR (trava contra toque errado; o banco confere de novo)
 const MAX_ITENS = 6
@@ -31,6 +32,16 @@ export default function Validar() {
   useEffect(() => {
     setQtd((q) => Object.fromEntries(Object.entries(q).filter(([s]) => disponiveis.includes(s))))
   }, [disponiveis])
+
+  // Foto de quem está retirando (só aparece se a pessoa colocou uma; vale para quem tem QR ativo)
+  const [fotoPath, setFotoPath] = useState(null)
+  const codigoLido = state?.codigo
+  useEffect(() => {
+    if (!codigoLido) return undefined
+    let vivo = true
+    supabase.rpc('foto_do_codigo', { p_codigo: codigoLido }).then(({ data, error }) => { if (vivo && !error) setFotoPath(data || null) })
+    return () => { vivo = false }
+  }, [codigoLido])
 
   if (!state?.codigo) return <Navigate to="/equipe" replace />
   const info = state.info || {}
@@ -60,9 +71,18 @@ export default function Validar() {
       <EquipeBand ponto={ponto} voltar="/equipe" />
       <main className="screen" style={{ paddingTop: 16 }}>
         <section className="card row" aria-live="polite">
-          <span style={{ width: 52, height: 52, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: info.valido ? 'var(--ok-bg)' : 'var(--err-bg)', color: info.valido ? 'var(--ok)' : 'var(--err)' }}>
-            <Icon name={info.valido ? 'check' : 'x'} size={28} stroke={2.6} />
-          </span>
+          {fotoPath ? (
+            <span style={{ position: 'relative', width: 64, height: 64, flexShrink: 0, display: 'inline-flex' }}>
+              <Avatar nome={info.atleta_nome} path={fotoPath} size={64} />
+              <span style={{ position: 'absolute', right: -4, bottom: -4, width: 26, height: 26, borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: info.valido ? 'var(--ok)' : 'var(--err)', color: '#fff', border: '2px solid var(--surface, #fff)' }}>
+                <Icon name={info.valido ? 'check' : 'x'} size={15} stroke={3} />
+              </span>
+            </span>
+          ) : (
+            <span style={{ width: 52, height: 52, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: info.valido ? 'var(--ok-bg)' : 'var(--err-bg)', color: info.valido ? 'var(--ok)' : 'var(--err)' }}>
+              <Icon name={info.valido ? 'check' : 'x'} size={28} stroke={2.6} />
+            </span>
+          )}
           <div className="grow">
             <div className="tiny" style={{ fontWeight: 800, letterSpacing: '0.08em', color: info.valido ? 'var(--ok)' : 'var(--err)' }}>
               {info.valido ? 'CÓDIGO VÁLIDO' : 'NÃO LIBERADO'}

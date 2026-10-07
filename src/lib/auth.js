@@ -4,7 +4,7 @@ import { supabase } from './supabase'
 const AuthCtx = createContext(null)
 export const useAuth = () => useContext(AuthCtx)
 
-const PERFIL_COLS = 'id, email, nome, tipo, papel, plano, creditos, planos ( id, nome, preco, creditos_mes, acesso_totem, tem_kit )'
+const PERFIL_COLS = 'id, email, nome, tipo, papel, plano, creditos, foto_path, planos ( id, nome, preco, creditos_mes, acesso_totem, tem_kit )'
 export const PLANOS_COM_CREDITO = ['starter', 'runner', 'hero']
 const SEM_RECARGA = { saldo: 0, vence_em: null, pendentes: 0 }
 
