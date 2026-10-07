@@ -45,7 +45,7 @@ export default function Perfil() {
         </div>
 
         <section className="card accent stack" style={{ gap: 14 }} aria-label="Seu plano">
-          <div className="streaks" aria-hidden="true" style={{ right: 0, top: -10, width: 60, height: 140 }}><i style={{ right: 20, width: 12, height: 140, opacity: 0.8 }} /></div>
+          <div className="streaks" aria-hidden="true" style={{ right: 0, top: -10, width: 60, height: 96 }}><i style={{ right: 20, width: 12, height: 96, opacity: 0.8 }} /></div>
           <span className="label-caps">{conta.tipo === 'cliente' ? 'Seu plano' : 'Seu acesso'}</span>
           <div className="row" style={{ alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
             <span className="num" style={{ fontSize: 'clamp(26px, 8vw, 34px)', textTransform: 'uppercase' }}>{conta.rotulo}</span>

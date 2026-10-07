@@ -96,7 +96,7 @@ export default function MeuQR() {
             <span className="icon-tile" style={{ width: 64, height: 64, borderRadius: 18 }}><Icon name="qr" size={32} /></span>
             <h1 className="h2">Seu QR libera os pontos com os planos Starter, Runner e Hero</h1>
             <p className="small" style={{ margin: 0, color: 'var(--text-2)' }}>
-              Seu plano atual é <strong>{plano.nome || 'Grátis'}</strong>. Com o Starter você tem 10 créditos por mês, com o Runner 20 e com o Hero 30, para retirar água, carbo gel e eletrólito nos pontos Runergy.
+              Seu plano atual é <strong>{plano.nome || 'Grátis'}</strong>. Com o Starter, o Runner ou o Hero você recebe créditos todo mês para retirar água, carbo gel e eletrólito nos pontos Runergy.
             </p>
             <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Ver planos</Link>
           </section>

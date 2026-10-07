@@ -59,7 +59,7 @@ export default function Vender() {
           </div>
         </section>
         <div className="small" style={{ background: 'rgba(255,255,255,0.22)', borderRadius: 18, padding: 14, lineHeight: 1.5 }}>
-          <strong>Dica:</strong> com o Runner esse cliente teria 10 créditos por mês. Mostre o app e convide para assinar.
+          <strong>Dica:</strong> com um plano Runergy esse cliente retiraria com créditos pelo QR, mais barato que no avulso. Mostre o app e convide para assinar.
         </div>
         <div className="stack" style={{ marginTop: 'auto', gap: 10, paddingBottom: 'var(--safe-bottom)' }}>
           <button type="button" className="btn btn-block btn-lg" style={{ background: '#121212', color: '#FFFFFF' }} onClick={novaVenda}>Nova venda</button>

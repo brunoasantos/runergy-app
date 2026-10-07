@@ -96,7 +96,7 @@ export default function Inicio() {
             <span className="icon-tile" style={{ background: 'var(--orange)', color: 'var(--on-orange)' }}><Icon name="bolt" /></span>
             <span className="grow">
               <span style={{ display: 'block', fontWeight: 800 }}>{total === 0 ? 'Seus créditos acabaram' : `Restam ${total} ${total === 1 ? 'crédito' : 'créditos'}`}</span>
-              <span className="small" style={{ color: 'var(--text-2)' }}>Recarregue e siga treinando: 5 créditos por R$ 12,50.</span>
+              <span className="small" style={{ color: 'var(--text-2)' }}>Recarregue pelo app e siga treinando: os créditos extras valem 60 dias.</span>
             </span>
             <Icon name="chevron" size={18} />
           </Link>
@@ -144,7 +144,7 @@ export default function Inicio() {
           <section className="card accent stack" style={{ gap: 12 }}>
             <span className="h3">Retire água e gel na sua rota</span>
             <p className="small" style={{ margin: 0, color: 'var(--text-2)' }}>
-              O acesso aos pontos Runergy vem nos planos Starter (10 créditos por mês), Runner (20) e Hero (30) para água, carbo gel e eletrólito.
+              O acesso aos pontos Runergy vem nos planos Starter, Runner e Hero, com créditos todo mês para água, carbo gel e eletrólito.
             </p>
             <Link to="/planos" className="btn btn-primary btn-block" style={{ textDecoration: 'none' }}>Ver planos</Link>
           </section>

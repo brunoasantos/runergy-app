@@ -22,8 +22,12 @@ function usePlanos() {
     supabase.from('planos').select('id, preco, frete, ativo, creditos_mes').in('id', PLANOS_BASE.map((p) => p.id)).then(({ data }) => {
       if (!data) return
       const m = Object.fromEntries(data.map((r) => [r.id, r]))
-      setLista(PLANOS_BASE.map((p) => (m[p.id] ? { ...p, preco: Number(m[p.id].preco), frete: Number(m[p.id].frete || 0), ativo: m[p.id].ativo !== false, creditos: m[p.id].creditos_mes ?? p.creditos } : p))
-        .filter((p) => !p.kit || p.ativo))
+      setLista(PLANOS_BASE.map((p) => {
+        if (!m[p.id]) return p
+        const creditos = m[p.id].creditos_mes ?? p.creditos
+        return { ...p, preco: Number(m[p.id].preco), frete: Number(m[p.id].frete || 0), ativo: m[p.id].ativo !== false, creditos,
+          itens: p.itens.map((i) => i.replace(/^\d+ créditos por mês/, `${creditos} créditos por mês`)) }
+      }))
     })
   }, [])
   return lista
@@ -32,8 +36,9 @@ function usePlanos() {
 /** Assinar pelo app: escolhe o plano e segue para o pagamento no Mercado Pago (só o Kit em casa pede endereço). */
 export default function Planos() {
   const { perfil, conta, recarregarPerfil } = useAuth()
-  const PLANOS = usePlanos()
   const atual = conta.tipo === 'cliente' ? perfil.plano : null
+  // Plano desligado no painel (Ajustes › Planos) não aparece, a não ser que seja o plano atual da pessoa
+  const PLANOS = usePlanos().filter((p) => (p.kit ? p.ativo : p.ativo !== false) || p.id === atual)
   const [escolha, setEscolha] = useState([...COM_CREDITO, 'kit'].includes(atual) ? atual : 'hero')
   // Quem já assina pelo Mercado Pago troca de plano na mesma assinatura (sem segunda cobrança)
   const [ass, setAss] = useState(undefined)
@@ -54,7 +59,10 @@ export default function Planos() {
   const [emailMp, setEmailMp] = useState('')
   const emailMpOk = !outroMp || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailMp.trim())
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }))
-  const plano = PLANOS.find((p) => p.id === escolha) || PLANOS.find((p) => p.id === 'hero')
+  const plano = PLANOS.find((p) => p.id === escolha) || PLANOS.find((p) => p.id === 'hero') || PLANOS[0]
+  // Escolha apontando para um plano que saiu da lista (desligado no painel): vai para o maior disponível
+  const idsLista = PLANOS.map((p) => p.id).join(',')
+  useEffect(() => { if (PLANOS.length && !PLANOS.some((p) => p.id === escolha)) setEscolha(PLANOS.filter((p) => !p.kit).slice(-1)[0]?.id || PLANOS[0].id) }, [idsLista]) // eslint-disable-line
   const comEntrega = !!plano?.kit
 
   useEffect(() => {
@@ -80,26 +88,27 @@ export default function Planos() {
     const m = mascaraCep(v); set('cep', m)
     if (m.replace(/\D/g, '').length === 8) completarPeloCep(m)
   }
-  // Cadastro antigo com CEP mas sem endereço: completa sozinho ao abrir (só importa para o Kit em casa)
+  // Cadastro antigo com CEP mas sem endereço: completa sozinho ao abrir
   useEffect(() => {
-    if (carregado && comEntrega && f.cep.replace(/\D/g, '').length === 8 && (!f.endereco || !f.cidade)) completarPeloCep(f.cep, false)
-  }, [carregado, comEntrega]) // eslint-disable-line
+    if (carregado && f.cep.replace(/\D/g, '').length === 8 && (!f.endereco || !f.cidade)) completarPeloCep(f.cep, false)
+  }, [carregado]) // eslint-disable-line
 
   const telOk = f.telefone.replace(/\D/g, '').length >= 10
   const enderecoOk = f.cep.replace(/\D/g, '').length === 8 && f.cidade.trim() && f.estado && f.endereco.trim() && f.numero.trim()
-  const completo = telOk && (!comEntrega || enderecoOk)
+  // Endereço é pedido em todos os planos (kit, brindes e promoções)
+  const completo = telOk && enderecoOk
 
   async function assinar(e) {
     e.preventDefault()
     if (!completo || !emailMpOk || enviando || escolha === atual) return
     setEnviando(true); setErro('')
-    const dados = comEntrega ? { nome: perfil.nome, ...f } : { nome: perfil.nome, telefone: f.telefone }
+    const dados = { nome: perfil.nome, ...f }
     const r1 = await supabase.rpc('salvar_meu_cadastro', { p: dados })
     if (r1.error) { setErro(mensagemErro(r1.error)); setEnviando(false); return }
     // Cria a assinatura no Mercado Pago (Edge Function mp-checkout) e abre o link de pagamento
     const { data, error } = await supabase.functions.invoke('mp-checkout', { body: {
       plano: plano.id, email: perfil.email, nome: perfil.nome, telefone: f.telefone, origem: 'app',
-      ...(comEntrega ? { cep: f.cep, cidade: f.cidade.trim(), estado: f.estado, endereco: f.endereco.trim(), numero: f.numero.trim(), complemento: f.complemento.trim() } : {}),
+      cep: f.cep, cidade: f.cidade.trim(), estado: f.estado, endereco: f.endereco.trim(), numero: f.numero.trim(), complemento: f.complemento.trim(),
       email_mp: outroMp ? emailMp.trim().toLowerCase() : undefined,
     } })
     if (error || !data?.link) { setErro('Não foi possível abrir o pagamento agora. Tente de novo em instantes.'); setEnviando(false); return }
@@ -140,12 +149,11 @@ export default function Planos() {
         )}
         {ass !== undefined && !assinaAtivo && <form className="card stack" style={{ gap: 12 }} onSubmit={assinar} noValidate>
           <div className="stack" style={{ gap: 2 }}>
-            <strong>{comEntrega ? 'Entrega do kit' : 'Seus dados'}</strong>
-            <span className="small" style={{ color: 'var(--text-2)' }}>{comEntrega ? (carregado && enderecoOk ? 'Confira o endereço. Ele fica salvo no seu cadastro.' : 'Preencha uma vez e ele fica salvo no seu cadastro.') : 'Seu WhatsApp fica salvo no cadastro para a equipe falar com você.'}</span>
+            <strong>{comEntrega ? 'Entrega do kit' : 'Seus dados e endereço'}</strong>
+            <span className="small" style={{ color: 'var(--text-2)' }}>{carregado && enderecoOk ? 'Confira seus dados. Eles ficam salvos no seu cadastro.' : comEntrega ? 'Preencha uma vez e ele fica salvo no seu cadastro.' : 'Preencha uma vez: fica salvo no seu cadastro para brindes e novidades.'}</span>
           </div>
           <div className="field"><label htmlFor="pl-tel">WhatsApp</label>
             <input id="pl-tel" className="input" type="tel" inputMode="tel" autoComplete="tel" placeholder="(00) 00000-0000" value={f.telefone} onChange={(e) => set('telefone', mascaraTel(e.target.value))} /></div>
-          {comEntrega && <>
           <div className="form-duas">
             <div className="field"><label htmlFor="pl-cep">CEP{buscando ? ' · buscando…' : ''}</label>
               <input id="pl-cep" className="input" inputMode="numeric" autoComplete="postal-code" placeholder="00000-000" value={f.cep} onChange={(e) => cep(e.target.value)} /></div>
@@ -165,14 +173,13 @@ export default function Planos() {
             <div className="field"><label htmlFor="pl-comp">Complemento</label>
               <input id="pl-comp" className="input" autoComplete="address-line2" placeholder="Apto, bloco…" value={f.complemento} onChange={(e) => set('complemento', e.target.value)} /></div>
           </div>
-          <div className="row between" style={{ background: 'var(--surface-2)', borderRadius: 14, padding: '10px 14px', gap: 10 }}>
+          {comEntrega && <div className="row between" style={{ background: 'var(--surface-2)', borderRadius: 14, padding: '10px 14px', gap: 10 }}>
             <span className="stack" style={{ gap: 0 }}>
               <strong className="small">Total por mês</strong>
               <span className="tiny" style={{ color: 'var(--text-2)' }}>kit {brl(plano.preco)} + frete {brl(plano.frete)}</span>
             </span>
             <strong style={{ whiteSpace: 'nowrap' }}>{brl(Number(plano.preco) + Number(plano.frete || 0))}</strong>
-          </div>
-          </>}
+          </div>}
           <label className="row small" style={{ gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
             <input type="checkbox" checked={outroMp} onChange={(e) => setOutroMp(e.target.checked)} style={{ marginTop: 3 }} />
             <span>Uso <strong>outro e-mail</strong> na minha conta do Mercado Pago <span className="muted">(o Mercado Pago só aceita pagar logado com o mesmo e-mail)</span></span>
