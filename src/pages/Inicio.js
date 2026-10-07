@@ -9,6 +9,9 @@ import InstallPrompt from '../components/InstallPrompt'
 import Icon from '../components/Icon'
 import { useDisponibilidade, estadoItem } from '../lib/disponibilidade'
 
+// Links do cabeçalho "Pontos Runergy": mesma altura e alinhamento (botão e link)
+const LINK_TOPO = { fontSize: 13, lineHeight: 1.2, display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '8px 4px', whiteSpace: 'nowrap' }
+
 export default function Inicio() {
   const disp = useDisponibilidade()
   const { perfil, ehEquipe, conta } = useAuth()
@@ -174,20 +177,20 @@ export default function Inicio() {
           </div>
         )}
 
-        <div className="row between" style={{ marginTop: 4 }}>
-          <h2 className="h3">Pontos Runergy</h2>
-          <div className="row" style={{ gap: 12 }}>
+        <div className="row between" style={{ marginTop: 4, flexWrap: 'wrap', columnGap: 4, rowGap: 0 }}>
+          <h2 className="h3" style={{ whiteSpace: 'nowrap' }}>Pontos Runergy</h2>
+          <div className="row" style={{ gap: 2, alignItems: 'center', flexShrink: 0, marginLeft: 'auto' }}>
             {!posicao && navigator.geolocation && (
-              <button className="btn-link" onClick={pedirLocalizacao} style={{ fontSize: 13 }}>Ver distância</button>
+              <button type="button" className="btn-link" onClick={pedirLocalizacao} style={LINK_TOPO}>Ver distância</button>
             )}
-            <Link to="/pontos" className="btn-link" style={{ fontSize: 13, textDecoration: 'none' }}>Ver no mapa</Link>
+            <Link to="/pontos" className="btn-link" style={{ ...LINK_TOPO, textDecoration: 'none' }}>{pontos?.length > 3 ? 'Ver todos' : 'Ver no mapa'}</Link>
           </div>
         </div>
 
         <div className="stack">
           {pontos === null && [0, 1].map((i) => <div key={i} className="skeleton" style={{ height: 72 }} />)}
           {pontos?.length === 0 && <p className="small muted" style={{ margin: 0 }}>Nenhum ponto ativo no momento. Avisamos quando abrir o próximo.</p>}
-          {ordenados.map((p) => (
+          {ordenados.slice(0, 3).map((p) => (
             <div key={p.totem_code} className="card tight row">
               <span className="icon-tile"><Icon name="pin" /></span>
               <div className="grow">
@@ -211,6 +214,9 @@ export default function Inicio() {
               </div>
             </div>
           ))}
+          {ordenados.length > 3 && (
+            <Link to="/pontos" className="btn btn-ghost btn-block" style={{ textDecoration: 'none' }}>Ver todos os {ordenados.length} pontos</Link>
+          )}
         </div>
       </main>
       <BottomNav />

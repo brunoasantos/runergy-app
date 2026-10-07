@@ -14,6 +14,8 @@ import Planos from './pages/Planos'
 import CancelarAssinatura from './pages/CancelarAssinatura'
 import MeuKit from './pages/MeuKit'
 import Recarga from './pages/Recarga'
+import AceitarTermos from './pages/AceitarTermos'
+import { useTermos } from './lib/termos'
 import { PEDIR_NOVA_SENHA } from './lib/cadastro'
 import BemVindo from './pages/BemVindo'
 import Inicio from './pages/Inicio'
@@ -44,12 +46,16 @@ function Carregando() {
 function Protegida({ children, equipe = false }) {
   const { session, perfil, carregando, ehEquipe } = useAuth()
   const loc = useLocation()
+  const [termos, aceitarTermos] = useTermos(session?.user?.id, session?.user?.user_metadata)
   if (carregando || (session && !perfil)) return <Carregando />
   if (!session) return <Navigate to="/entrar" replace state={{ de: loc.pathname }} />
   // Acabou de confirmar o código do "Esqueci minha senha": cria a senha nova antes de qualquer coisa
   let novaSenha = false
   try { novaSenha = sessionStorage.getItem(PEDIR_NOVA_SENHA) === '1' } catch (e) {}
   if (novaSenha && loc.pathname !== '/nova-senha') return <Navigate to="/nova-senha" replace />
+  // Termos de uso e privacidade: aceite da versão vigente antes de usar o app
+  if (!novaSenha && termos === null) return <Carregando />
+  if (!novaSenha && termos && !termos.ok) return <AceitarTermos versao={termos.versao} aceitar={aceitarTermos} />
   if (!perfil.nome && !novaSenha && loc.pathname !== '/bem-vindo') return <Navigate to="/bem-vindo" replace />
   if (equipe && !ehEquipe) return <Navigate to="/" replace />
   if (equipe) salvarModo('equipe')

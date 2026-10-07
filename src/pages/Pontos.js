@@ -10,6 +10,7 @@ import Icon from '../components/Icon'
 import { useDisponibilidade, estadoItem } from '../lib/disponibilidade'
 
 const FLORIPA = [-27.5954, -48.548] // centro quando ainda não temos a localização
+const POR_PAGINA = 10 // lista em blocos de 10, do mais perto para o mais longe
 const pino = (ativo) => L.divIcon({ className: '', iconSize: [34, 34], iconAnchor: [17, 17], html: `<span class="mapa-pino${ativo ? ' ativo' : ''}"></span>` })
 const eu = L.divIcon({ className: '', iconSize: [22, 22], iconAnchor: [11, 11], html: '<span class="mapa-eu"></span>' })
 const rota = (p) => `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`
@@ -22,6 +23,7 @@ export default function Pontos() {
   const [posicao, setPosicao] = useState(null)
   const [semLocal, setSemLocal] = useState(false)
   const [sel, setSel] = useState(null)
+  const [mostrar, setMostrar] = useState(POR_PAGINA)
   const caixa = useRef(null)
   const mapa = useRef(null)
   const camadas = useRef(null)
@@ -89,7 +91,7 @@ export default function Pontos() {
 
         {pontos === null && <div className="skeleton" style={{ height: 96 }} />}
         {pontos?.length === 0 && <p className="small muted" style={{ margin: 0 }}>Nenhum ponto ativo no momento. Avisamos quando abrir o próximo.</p>}
-        {lista.map((p) => (
+        {lista.slice(0, mostrar).map((p) => (
           <button key={p.totem_code} type="button" className={`card tight ponto-card${atual?.totem_code === p.totem_code ? ' sel' : ''}`} onClick={() => setSel(p.totem_code)}>
             <div className="row between" style={{ gap: 10, alignItems: 'baseline' }}>
               <strong className="ellipsis" style={{ fontSize: 16 }}>{p.nome}</strong>
@@ -104,6 +106,11 @@ export default function Pontos() {
             </div>
           </button>
         ))}
+        {lista.length > mostrar && (
+          <button type="button" className="btn btn-ghost btn-block" onClick={() => setMostrar((n) => n + POR_PAGINA)}>
+            Ver mais pontos ({lista.length - mostrar} {lista.length - mostrar === 1 ? 'restante' : 'restantes'})
+          </button>
+        )}
 
         {!conta.acessoQR && (
           <section className="card stack" style={{ gap: 10, background: 'var(--band-bg)', color: 'var(--band-text)', border: 0 }}>

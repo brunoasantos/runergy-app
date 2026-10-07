@@ -25,8 +25,10 @@ export default function Recarga() {
   const [erro, setErro] = useState('')
   const [retorno, setRetorno] = useState(voltouDoPagamento ? 'conferindo' : null) // conferindo | creditada | pendente
 
-  const carregarLista = useCallback(() => supabase.from('recargas').select('id, criado_em, creditos, restante, preco, status, valido_ate')
-    .order('criado_em', { ascending: false }).limit(10).then(({ data }) => setLista(data || [])), [])
+  // Pedido não pago some da tela depois de 2 dias (vira "Não concluída" só no painel)
+  const carregarLista = useCallback(() => supabase.from('recargas').select('id, criado_em, creditos, restante, preco, status, valido_ate, origem, mp_link')
+    .neq('status', 'expirada').order('criado_em', { ascending: false }).limit(10)
+    .then(({ data }) => setLista((data || []).filter((r) => r.status !== 'pendente' || Date.now() - new Date(r.criado_em).getTime() < 47 * 3600e3))), [])
 
   useEffect(() => {
     supabase.from('recarga_pacotes').select('id, creditos, preco').eq('ativo', true).order('ordem')
@@ -146,12 +148,14 @@ export default function Recarga() {
               const [rot, cor] = SITUACAO[r.status] || [r.status, 'neutral']
               const vencida = r.status === 'paga' && r.valido_ate && new Date(r.valido_ate) < new Date()
               return (
-                <div key={r.id} className="card tight row between" style={{ gap: 10 }}>
+                <div key={r.id} className={`card tight ${r.status === 'pendente' && r.mp_link ? 'stack' : 'row between'}`} style={{ gap: 10 }}>
                   <span className="stack" style={{ gap: 2 }}>
-                    <strong className="small">+{r.creditos} créditos · {brl(r.preco)}</strong>
-                    <span className="tiny muted">{fmtData(r.criado_em)}{r.status === 'paga' && r.valido_ate ? ` · ${vencida ? 'venceu' : 'vale até'} ${fmtData(r.valido_ate)} · restam ${r.restante}` : ''}</span>
+                    <strong className="small">+{r.creditos} créditos · {r.origem === 'cortesia' ? 'cortesia' : brl(r.preco)}</strong>
+                    <span className="tiny muted">{fmtData(r.criado_em)}{r.status === 'pendente' ? ' · aguardando pagamento (o link vale 2 dias)' : ''}{r.status === 'paga' && r.valido_ate ? ` · ${vencida ? 'venceu' : 'vale até'} ${fmtData(r.valido_ate)} · restam ${r.restante}` : ''}</span>
                   </span>
-                  <span className={`pill ${vencida ? 'neutral' : cor}`}>{vencida ? 'Vencida' : rot}</span>
+                  {r.status === 'pendente' && r.mp_link
+                    ? <a href={r.mp_link} className="btn btn-primary btn-sm btn-block" style={{ textDecoration: 'none' }}>Continuar pagamento</a>
+                    : <span className={`pill ${vencida ? 'neutral' : cor}`}>{vencida ? 'Vencida' : r.origem === 'cortesia' && r.status === 'paga' ? 'Cortesia' : rot}</span>}
                 </div>
               )
             })}

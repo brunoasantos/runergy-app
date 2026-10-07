@@ -5,6 +5,7 @@ import { mensagemErro } from '../lib/format'
 import { emailValido, mascaraTel } from '../lib/cadastro'
 import PageHeader from '../components/PageHeader'
 import CodigoForm from '../components/CodigoForm'
+import { TERMOS_URL, PRIVACIDADE_URL, VERSAO_TERMOS } from '../lib/termos'
 
 // Conta grátis: nome, e-mail, WhatsApp e senha. Endereço só quando assinar um plano.
 // Com a confirmação de e-mail ligada no Supabase, chega um código de 6 dígitos (uma vez só).
@@ -28,7 +29,7 @@ export default function CriarConta() {
     setEnviando(true); setErro(''); setJaExiste(false)
     const { data, error } = await supabase.auth.signUp({
       email: em, password: f.senha,
-      options: { data: { nome: f.nome.trim().replace(/\s+/g, ' '), telefone: f.telefone }, emailRedirectTo: window.location.origin },
+      options: { data: { nome: f.nome.trim().replace(/\s+/g, ' '), telefone: f.telefone, termos_versao: VERSAO_TERMOS, termos_origem: 'cadastro_app' }, emailRedirectTo: window.location.origin },
     })
     setEnviando(false)
     if (error) {
@@ -85,7 +86,7 @@ export default function CriarConta() {
         </div>
         <label className="row small" style={{ gap: 10, alignItems: 'flex-start', color: 'var(--text-2)', lineHeight: 1.45, cursor: 'pointer' }}>
           <input type="checkbox" checked={aceite} onChange={(e) => setAceite(e.target.checked)} style={{ width: 20, height: 20, margin: 0, accentColor: 'var(--orange)', flexShrink: 0 }} />
-          <span>Li e aceito os Termos de Uso e a Política de Privacidade.</span>
+          <span>Li e aceito os <a href={TERMOS_URL} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700 }}>Termos de Uso</a> e a <a href={PRIVACIDADE_URL} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700 }}>Política de Privacidade</a>.</span>
         </label>
         {jaExiste && <div className="alert warn" role="alert">Esse e-mail já tem conta na Runergy. <Link to="/entrar" state={{ email: em }}>Entrar</Link> ou use “Esqueci minha senha”.</div>}
         {erro && <div className="alert err" role="alert">{erro}</div>}

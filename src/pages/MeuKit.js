@@ -72,7 +72,7 @@ export default function MeuKit() {
   return (
     <>
       <main className="screen has-nav" style={{ gap: 14 }}>
-        <PageHeader titulo={brindes ? 'Meus brindes' : 'Meu kit'} voltar={-1} />
+        <PageHeader titulo={atual ? (atual.tipo === 'brinde' ? 'Meus brindes' : 'Meu kit') : brindes ? 'Meus brindes' : 'Meu kit'} voltar={-1} />
 
         {envios === null && <div className="skeleton" style={{ height: 180 }} />}
 
@@ -98,7 +98,7 @@ export default function MeuKit() {
             </div>
             <EtapasKit status={atual.status} />
             <span className="small" style={{ color: 'var(--text-2)' }}>{textoEtapa(atual)}</span>
-            <Rastreio codigo={atual.rastreio} />
+            {['postado', 'entregue'].includes(atual.status) && <Rastreio codigo={atual.rastreio} />}
             <div style={{ height: 1, background: 'var(--surface-2)' }} />
             <div className="stack" style={{ gap: 6 }}>
               <span className="label-caps">{atual.tipo === 'brinde' ? 'Brinde' : 'No kit'}</span>

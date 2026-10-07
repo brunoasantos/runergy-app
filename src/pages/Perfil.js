@@ -7,6 +7,7 @@ import { brl, fmtData, mensagemErro } from '../lib/format'
 import BottomNav from '../components/BottomNav'
 import ThemeSwitch from '../components/ThemeSwitch'
 import Icon from '../components/Icon'
+import { TERMOS_URL } from '../lib/termos'
 
 export default function Perfil() {
   const { perfil, ehEquipe, conta, sair, recarregarPerfil } = useAuth()
@@ -110,6 +111,9 @@ export default function Perfil() {
           </div>
           <a className="list-link" href="https://www.instagram.com/runergy.app/" target="_blank" rel="noopener noreferrer">
             <span style={{ color: 'var(--orange)' }}><Icon name="help" size={20} /></span><span className="grow">Ajuda e contato</span><Icon name="chevron" size={18} />
+          </a>
+          <a className="list-link" href={TERMOS_URL} target="_blank" rel="noopener noreferrer">
+            <span style={{ color: 'var(--orange)' }}><Icon name="check" size={20} /></span><span className="grow">Termos e privacidade</span><Icon name="chevron" size={18} />
           </a>
         </section>
 
