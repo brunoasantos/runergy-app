@@ -9,11 +9,31 @@ export default function Confirmado() {
   const { id } = useParams()
   const { perfil, conta } = useAuth()
   const [r, setR] = useState(null)
+  const [itens, setItens] = useState(null)
 
+  // Uma leitura do QR pode ter vários itens: todos gravados juntos (mesma pessoa e mesmo horário)
   useEffect(() => {
-    supabase.from('retiradas').select('suprimento, totem_nome, criado_em').eq('id', id).maybeSingle().then(({ data }) => setR(data))
+    let vivo = true
+    supabase.from('retiradas').select('suprimento, totem_nome, criado_em, atleta_id, creditos').eq('id', id).maybeSingle().then(async ({ data }) => {
+      if (!vivo) return
+      setR(data)
+      if (!data) return
+      const { data: todas } = await supabase.from('retiradas').select('suprimento, creditos')
+        .eq('atleta_id', data.atleta_id).eq('criado_em', data.criado_em)
+      if (vivo) setItens(todas && todas.length ? todas : [data])
+    })
     try { navigator.vibrate?.([60, 40, 60]) } catch (e) {}
+    return () => { vivo = false }
   }, [id])
+
+  // Junta iguais: "Água ×2"
+  const linhas = []
+  ;(itens || []).forEach((i) => {
+    const l = linhas.find((x) => x.suprimento === i.suprimento)
+    if (l) l.qtd += 1; else linhas.push({ suprimento: i.suprimento, qtd: 1 })
+  })
+  const total = (itens || []).reduce((a, i) => a + (i.creditos || 0), 0)
+  const varios = (itens || []).length > 1
 
   return (
     <main className="screen confirm-screen" style={{ minHeight: '100dvh', position: 'relative', overflow: 'hidden', paddingTop: 'calc(var(--safe-top) + 56px)' }}>
@@ -28,10 +48,20 @@ export default function Confirmado() {
       <h1 className="display" style={{ fontSize: 'clamp(40px, 13vw, 52px)', position: 'relative' }}>Pegou.<br />Agora<br />corre.</h1>
 
       <section className="card-dark stack" style={{ gap: 12, position: 'relative' }} aria-label="Detalhes da retirada">
-        <div className="row between small"><span style={{ color: '#B5B5B5' }}>Item</span><strong>{r ? suprimento(r.suprimento).label : '…'}</strong></div>
+        {itens === null
+          ? <div className="row between small"><span style={{ color: '#B5B5B5' }}>Item</span><strong>…</strong></div>
+          : linhas.map((l, n) => (
+            <div key={l.suprimento} className="row between small">
+              <span style={{ color: '#B5B5B5' }}>{linhas.length > 1 ? (n === 0 ? 'Itens' : '') : 'Item'}</span>
+              <strong>{suprimento(l.suprimento).label}{l.qtd > 1 ? ` ×${l.qtd}` : ''}</strong>
+            </div>
+          ))}
         <div className="row between small" style={{ gap: 16 }}><span style={{ color: '#B5B5B5' }}>Ponto</span><strong style={{ textAlign: 'right' }}>{r?.totem_nome || '…'}</strong></div>
         <div className="row between small"><span style={{ color: '#B5B5B5' }}>Horário</span><strong>{r ? fmtHora(r.criado_em) : '…'}</strong></div>
         <div style={{ height: 1, background: 'rgba(255,255,255,0.1)' }} />
+        {varios && !conta.ilimitado && total > 0 && (
+          <div className="row between small"><span style={{ color: '#B5B5B5' }}>Créditos usados</span><strong>{total}</strong></div>
+        )}
         <div className="row between" style={{ alignItems: 'baseline' }}>
           <span className="small" style={{ color: '#B5B5B5' }}>Créditos restantes</span>
           <span className="num" style={{ fontSize: 30, color: '#FF7A33' }}>{conta.ilimitado ? '∞' : perfil.creditos}</span>
